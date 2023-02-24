@@ -177,7 +177,7 @@ Connection::read(Fifo<TransactionMessage>& fifo)
          
    assert(bytesToRead > 0);
 
-   int bytesRead = read(writePair.first, bytesToRead);
+   int bytesRead = read(writePair.first, static_cast<int>(bytesToRead));
    if (bytesRead <= 0)
    {
       return bytesRead;

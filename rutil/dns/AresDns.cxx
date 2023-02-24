@@ -421,7 +421,7 @@ AresDns::errorMessage(long errorCode)
 {
    const char* aresMsg = ares_strerror(errorCode);
 
-   int len = strlen(aresMsg);
+   size_t len = strlen(aresMsg);
    char* errorString = new char[len+1];
 
    strncpy(errorString, aresMsg, len);
@@ -432,7 +432,8 @@ AresDns::errorMessage(long errorCode)
 void
 AresDns::lookup(const char* target, unsigned short type, ExternalDnsHandler* handler, void* userData)
 {
-   ares_query(mChannel, target, C_IN, type,
+	ares_search(mChannel, target, C_IN, type,
+//   ares_query(mChannel, target, C_IN, type,
 #if defined(USE_ARES)
               resip_AresDns_aresCallback,
 #elif defined(USE_CARES)

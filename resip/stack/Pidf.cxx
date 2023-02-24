@@ -118,7 +118,7 @@ int
 Pidf::getNumTuples() const
 {
    checkParsed();
-   return mTuples.size();
+   return static_cast<int>(mTuples.size());
 }
 
 Contents* 

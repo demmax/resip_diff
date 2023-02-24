@@ -1771,6 +1771,8 @@ Codec::parse(ParseBuffer& pb,
       pb.data(mEncodingParameters, anchor);
    }
    mPayloadType = payloadType;
+	mName.c_str();  // alexei - Data::own();	
+	mEncodingParameters.c_str(); // anatol - Data::own();	
 
    assignFormatParameters(medium); 
 }
@@ -1793,6 +1795,7 @@ Codec::assignFormatParameters(const SdpContents::Session::Medium& medium)
                const char* anchor = pb.skipWhitespace();
                pb.skipToEnd();
                pb.data(mParameters, anchor);
+			   mParameters.c_str(); // anatol - Data::own();	
                break;
             }
          }
@@ -1862,7 +1865,8 @@ bool
 resip::operator==(const Codec& lhs, const Codec& rhs)
 {
    static Data defaultEncodingParameters(Data("1"));  // Default for audio streams (1-Channel)
-   return (isEqualNoCase(lhs.mName, rhs.mName) && lhs.mRate == rhs.mRate && 
+	return (lhs.mPayloadType >= 0 && lhs.mPayloadType < 96 && lhs.mPayloadType == rhs.mPayloadType) ||
+			(isEqualNoCase(lhs.mName, rhs.mName) && lhs.mRate == rhs.mRate && 
            (lhs.mEncodingParameters == rhs.mEncodingParameters ||
             (lhs.mEncodingParameters.empty() && rhs.mEncodingParameters == defaultEncodingParameters) ||
             (lhs.mEncodingParameters == defaultEncodingParameters && rhs.mEncodingParameters.empty())));

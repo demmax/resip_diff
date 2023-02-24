@@ -22,6 +22,15 @@
 #include "rutil/Lock.hxx"
 #include "rutil/Logger.hxx"
 
+extern "C"
+{
+#ifdef WIN32
+#include <Rpc.h>
+#pragma comment(lib, "rpcrt4")
+#else
+#include <uuid/uuid.h>
+#endif
+}
 
 #ifdef USE_SSL
 #ifdef WIN32
@@ -262,6 +271,30 @@ Random::getCryptoRandomBase64(unsigned int numBytes)
    return Random::getCryptoRandom(numBytes).base64encode();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//  AVL, 10/4/2012. Platform specific UUID generation; old algorithm supposedly may be not enough unique :)
+static Data 
+generateUuid()
+{
+#ifdef WIN32
+    UUID uuid;
+    UuidCreate ( &uuid );
+
+    unsigned char * str;
+    UuidToStringA ( &uuid, &str );
+
+    resip::Data s( ( char* ) str );
+
+    RpcStringFreeA ( &str );
+#else
+    uuid_t uuid;
+    uuid_generate_random ( uuid );
+    char s[37];
+    uuid_unparse ( uuid, s );
+#endif
+    return s;
+}
+
 /*
    [From RFC 4122]
 
@@ -296,6 +329,8 @@ Data
 Random::getVersion4UuidUrn()
 {
   Data urn ("urn:uuid:");
+
+  /*
   urn += getCryptoRandomHex(4); // time-low
   urn += "-";
   urn += getCryptoRandomHex(2); // time-mid
@@ -316,6 +351,9 @@ Random::getVersion4UuidUrn()
   urn += getCryptoRandomHex(1); // clock-seq-low
   urn += "-";
   urn += getCryptoRandomHex(6); // node
+  */
+
+  urn += generateUuid();
   return urn;
 }
 

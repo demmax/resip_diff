@@ -15,6 +15,8 @@ Subsystem Subsystem::TRANSPORT("RESIP:TRANSPORT");
 Subsystem Subsystem::STATS("RESIP:STATS");
 Subsystem Subsystem::REPRO("REPRO:APP");
 Subsystem Subsystem::NONE("UNDEFINED");
+Subsystem Subsystem::B2BSERVER("B2BSERVER");
+
 
 const Data& Subsystem::getSubsystem() const
 {

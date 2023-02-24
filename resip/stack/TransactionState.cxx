@@ -3,7 +3,10 @@
 #endif
 
 #include "resip/stack/AbandonServerTransaction.hxx"
+#include "resip/stack/SilentlyAbandonServerTransaction.hxx"
+#include "resip/stack/SetTransactionMessageFilter.hxx"
 #include "resip/stack/CancelClientInviteTransaction.hxx"
+#include "resip/stack/CancelClientNonInviteTransaction.hxx"
 #include "resip/stack/ConnectionTerminated.hxx"
 #include "resip/stack/DnsInterface.hxx"
 #include "resip/stack/DnsResult.hxx"
@@ -51,7 +54,9 @@ TransactionState::TransactionState(TransactionController& controller, Machine m,
    mAckIsValid(false),
    mWaitingForDnsResult(false),
    mTransactionUser(tu),
-   mFailureReason(TransportFailure::None)
+   mFailureReason(TransportFailure::None),
+   mFilter(0),
+   mTryingTimerId(0)
 {
    StackLog (<< "Creating new TransactionState: " << *this);
 }
@@ -137,6 +142,9 @@ TransactionState::~TransactionState()
    delete mMsgToRetransmit;
    mMsgToRetransmit = 0;
 
+   if(mFilter != 0)
+       delete mFilter;
+
    mState = Bogus;
 }
 
@@ -186,7 +194,7 @@ TransactionState::process(TransactionController& controller)
       {
          controller.mStatsManager.received(sip);
       }
-      
+
       // .bwc. Check for error conditions we can respond to.
       if(sip->isRequest() && sip->method() != ACK)
       {
@@ -296,6 +304,7 @@ TransactionState::process(TransactionController& controller)
             NameAddr& to = state->mMsgToRetransmit->header(h_To);
             if(sip->header(h_To).isWellFormed())
             {
+#if 0 // alexei - breaks forking scenario if we get 486 on a forked leg (questionable scenario)
                // Overwrite tag.
                if(to.exists(p_tag))
                {
@@ -306,6 +315,7 @@ TransactionState::process(TransactionController& controller)
                      sip->header(h_To).param(p_tag) = to.param(p_tag);
                   }
                }
+#endif
             }
             else
             {
@@ -352,6 +362,23 @@ TransactionState::process(TransactionController& controller)
    if (state) // found transaction for sip msg
    {
       StackLog (<< "Found matching transaction for " << message->brief() << " -> " << *state);
+
+      if(sip) // hook by anatol (to be able to catch incorrect messages and get rid of them, mostly for NTT)
+      {
+          if(sip->isExternal() && state->mFilter != 0 && !state->mFilter->filterMessage(state->mController, *state, sip))
+          {
+              delete sip;
+              return;
+          }
+      }
+      else if(isSetTransactionMessageFilter(message))
+      {
+          if(state->mFilter != 0)
+              delete state->mFilter;
+
+          state->mFilter = static_cast<SetTransactionMessageFilter*>(message);
+          return;
+      }
 
       switch (state->mMachine)
       {
@@ -447,7 +474,7 @@ TransactionState::process(TransactionController& controller)
                else
                {
                   //StackLog(<<" adding T100 timer (INV)");
-                  controller.mTimers.add(Timer::TimerTrying, tid, Timer::T100);
+                  state->mTryingTimerId = controller.mTimers.add(Timer::TimerTrying, tid, Timer::T100);
                }
             }
             else if (sip->method() == CANCEL)
@@ -585,7 +612,7 @@ TransactionState::startServerNonInviteTimerTrying(SipMessage& sip, Data& tid)
       while(duration*2<Timer::T2) duration = duration * 2;
    }
    mMsgToRetransmit = make100(&sip);  // Store for use when timer expires
-   mController.mTimers.add(Timer::TimerTrying, tid, duration );  // Start trying timer so that we can send 100 to NITs as recommened in RFC4320
+   mTryingTimerId = mController.mTimers.add(Timer::TimerTrying, tid, duration );  // Start trying timer so that we can send 100 to NITs as recommened in RFC4320
 }
 
 void
@@ -805,6 +832,12 @@ TransactionState::processClientNonInvite(TransactionMessage* msg)
       processTransportFailure(msg);
       delete msg;
    }
+   else if(isCancelClientNonInviteTransaction(msg))
+   {
+        terminateClientTransaction(mId);
+        delete msg;
+        delete this;
+   }
    else
    {
       //StackLog (<< "TransactionState::processClientNonInvite: message unhandled");
@@ -827,7 +860,7 @@ TransactionState::processClientInvite(TransactionMessage* msg)
             delete mMsgToRetransmit; 
             saveOriginalContactAndVia(*sip);
             mMsgToRetransmit = sip;
-            mController.mTimers.add(Timer::TimerB, mId, Timer::TB);
+            mController.mTimers.add(Timer::TimerB, mId, sip->getTimerB() ? sip->getTimerB() : Timer::TB);
             sendToWire(msg); // don't delete msg
             break;
             
@@ -1183,7 +1216,7 @@ TransactionState::processServerNonInvite(TransactionMessage* msg)
             break;
 
          case Timer::TimerTrying:
-            if (mState == Trying)
+            if (mState == Trying && mTryingTimerId == timer->getId())
             {
                // Timer E has reached T2 - send a 100 as recommended by RFC4320 NIT-Problem-Actions
                sendToWire(mMsgToRetransmit);
@@ -1231,6 +1264,18 @@ TransactionState::processServerNonInvite(TransactionMessage* msg)
             mController.mTimers.add(Timer::TimerJ, mId, 64*Timer::T1 );
          }
       }
+      delete msg;
+   }
+   else if (isSilentlyAbandonServerTransaction(msg)) // this branch made by Anatol - NTT case when we need silently abandon transaction
+   {
+      if(mState==Trying || mState==Proceeding)
+      {
+         mIsAbandoned = true;
+
+         terminateServerTransaction(mId);
+         delete this;
+      }
+
       delete msg;
    }
    else
@@ -1476,7 +1521,7 @@ TransactionState::processServerInvite(TransactionMessage* msg)
             break;
 
          case Timer::TimerTrying:
-            if (mState == Trying)
+            if (mState == Trying && mTryingTimerId == timer->getId())
             {
                //StackLog (<< "TimerTrying fired. Send a 100");
                sendToWire(mMsgToRetransmit); // will get deleted when this is deleted
@@ -1538,6 +1583,15 @@ TransactionState::processServerInvite(TransactionMessage* msg)
                mIsAbandoned = true;
             }
          }
+      }
+      delete msg;
+   }
+   else if (isSilentlyAbandonServerTransaction(msg)) // this branch made by Anatol - NTT case when we need silently abandon transaction
+   {
+      if((mState == Trying || mState == Proceeding || mState == Completed) && !mIsAbandoned)
+      {
+        terminateServerTransaction(mId);
+        delete this;
       }
       delete msg;
    }
@@ -1664,7 +1718,8 @@ TransactionState::processNoDnsResults()
       return;
    }
 
-   InfoLog (<< "Ran out of dns entries for " << mDnsResult->target() << ". Send 503");
+	//alexkr: increase log level. DNS problems are often source of problems
+   ErrLog (<< "Ran out of dns entries for " << mDnsResult->target() << ". Send 503");
    assert(mDnsResult->available() == DnsResult::Finished);
    SipMessage* response = Helper::makeResponse(*mMsgToRetransmit, 503);
    WarningCategory warning;
@@ -2075,7 +2130,9 @@ TransactionState::sendToWire(TransactionMessage* msg, bool resend)
             Tuple target = simpleTupleForUri(sip->getForceTarget());
             StackLog(<<"!ah! response with force target going to : "<<target);
             mController.mTransportSelector.transmit(sip, target);
-            return;
+ 			//alexkr: NTT 1230
+			mResponseTarget = target;
+           return;
          }
          else if (sip->header(h_Vias).front().exists(p_rport) && sip->header(h_Vias).front().param(p_rport).hasValue())
          {
@@ -2108,6 +2165,10 @@ TransactionState::sendToTU(TransactionMessage* msg) const
             // blacklist last target.
             // .bwc. If there is no Retry-After, we do not blacklist
             // (see RFC 3261 sec 21.5.4 para 1)
+
+             // anatol - remove the blacklisting due to effect of non-sending
+             // mid/end requests to other party.
+             /*
             if(sipMsg->exists(resip::h_RetryAfter) && 
                sipMsg->header(resip::h_RetryAfter).isWellFormed())
             {
@@ -2115,6 +2176,7 @@ TransactionState::sendToTU(TransactionMessage* msg) const
                
                mDnsResult->blacklistLast(resip::Timer::getTimeMs()+relativeExpiry*1000);
             }
+            */
          
             break;
          case 408:
@@ -2142,11 +2204,11 @@ TransactionState::sendToTU(TransactionUser* tu, TransactionController& controlle
 {
    if (!tu)
    {
-      DebugLog(<< "Send to default TU: " << std::endl << std::endl << *msg);
+      DebugLog(<< "Send to default TU: "/* << std::endl << std::endl << *msg*/);
    }
    else
    {
-	  DebugLog (<< "Send to TU: " << *tu << " " << std::endl << std::endl << *msg);
+	  DebugLog (<< "Send to TU: " << *tu /*<< " " << std::endl << std::endl << *msg*/);
    }
    
    msg->setTransactionUser(tu);   
@@ -2248,11 +2310,28 @@ TransactionState::isAbandonServerTransaction(TransactionMessage* msg) const
 }
 
 bool 
-TransactionState::isCancelClientTransaction(TransactionMessage* msg) const
+TransactionState::isSilentlyAbandonServerTransaction(TransactionMessage* msg) const
+{
+   return dynamic_cast<SilentlyAbandonServerTransaction*>(msg) != 0;
+}
+
+bool 
+TransactionState::isSetTransactionMessageFilter(TransactionMessage* msg) 
+{
+   return dynamic_cast<SetTransactionMessageFilter*>(msg) != 0;
+}
+
+bool 
+TransactionState::isCancelClientTransaction(TransactionMessage* msg)
 {
    return dynamic_cast<CancelClientInviteTransaction*>(msg) != 0;
 }
 
+bool 
+TransactionState::isCancelClientNonInviteTransaction(TransactionMessage* msg)
+{
+   return dynamic_cast<CancelClientNonInviteTransaction*>(msg) != 0;
+}
 
 const Data&
 TransactionState::tid(SipMessage* sip) const

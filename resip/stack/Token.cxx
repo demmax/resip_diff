@@ -55,6 +55,11 @@ Token::isEqual(const Token& rhs) const
    return (value() == rhs.value());
 }
 
+bool Token::isEqualNoCase(const Token& rhs) const
+{
+	return ::isEqualNoCase(value(), rhs.value());
+}
+
 bool
 Token::operator==(const Token& rhs) const
 {

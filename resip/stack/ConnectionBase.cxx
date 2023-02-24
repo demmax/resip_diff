@@ -102,6 +102,12 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
    DebugLog(<< "In State: " << connectionStates[mConnState]);
    //getConnectionManager().touch(this); -- !dcm!
    
+	
+	//alexkr:
+	const char*  buf_snapshot     = mBuffer + mBufferPos;
+	int          buf_snapshot_len = bytesRead;
+	//:alexkr
+	
   start:   // If there is an overhang come back here, effectively recursing
    
    switch(mConnState)
@@ -148,7 +154,7 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
       }
       case ReadingHeaders:
       {
-         unsigned int chunkLength = mBufferPos + bytesRead;
+         unsigned int chunkLength = static_cast<unsigned int>(mBufferPos + bytesRead);
          char *unprocessedCharPtr;
          MsgHeaderScanner::ScanChunkResult scanChunkResult =
             mMsgHeaderScanner.scanChunk(mBuffer,
@@ -168,13 +174,13 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
          }
 
          unsigned int numUnprocessedChars =
-            (mBuffer + chunkLength) - unprocessedCharPtr;
+             static_cast<unsigned int>(mBuffer + chunkLength - unprocessedCharPtr);
 
          if(numUnprocessedChars==chunkLength)
          {
             // .bwc. MsgHeaderScanner wasn't able to parse anything useful;
             // don't bother mMessage yet, but make more room in mBuffer.
-            size_t size = numUnprocessedChars*3/2;
+            unsigned int size = numUnprocessedChars*3/2;
             if (size < ConnectionBase::ChunkSize)
             {
                size = ConnectionBase::ChunkSize;
@@ -226,7 +232,7 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
             else
             {
                // ...but some of the chunk must be shifted into the next one.
-               size_t size = numUnprocessedChars*3/2;
+               unsigned int size = numUnprocessedChars*3/2;
                if (size < ConnectionBase::ChunkSize)
                {
                   size = ConnectionBase::ChunkSize;
@@ -251,7 +257,7 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
          }
          else
          {         
-            size_t contentLength = 0;
+            unsigned int contentLength = 0;
             
             try
             {
@@ -293,8 +299,8 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
             {
                // The message body is incomplete.
                DebugLog(<< "partial body received");
-               int newSize=resipMin(resipMax((size_t)numUnprocessedChars*3/2,
-                                             (size_t)ConnectionBase::ChunkSize),
+               int newSize=resipMin(resipMax(numUnprocessedChars*3/2,
+                                             (unsigned int)ConnectionBase::ChunkSize),
                                     contentLength);
                char* newBuffer = MsgHeaderScanner::allocateBuffer(newSize);
                memcpy(newBuffer, unprocessedCharPtr, numUnprocessedChars);
@@ -316,7 +322,7 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
                if (overHang > 0) 
                {
                   // The next message has been partially read.
-                  size_t size = overHang*3/2;
+                  unsigned int size = overHang*3/2;
                   if (size < ConnectionBase::ChunkSize)
                   {
                      size = ConnectionBase::ChunkSize;
@@ -345,8 +351,9 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
                else
                {
                   Transport::stampReceived(mMessage);
-                  DebugLog(<< "##Connection: " << *this << " received: " << *mMessage);
+                  DebugLog(<< "##Connection: " << *this << " received:\n" << *mMessage);
                   fifo.add(mMessage);
+				   				   		   
                   mMessage = 0;
                }
 
@@ -360,7 +367,7 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
       }
       case PartialBody:
       {
-         size_t contentLength = 0;
+         UInt32 contentLength = 0;
 
          try
          {
@@ -393,10 +400,11 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
             }
             else
             {
-               DebugLog(<< "##ConnectionBase: " << *this << " received: " << *mMessage);
+               DebugLog(<< "##ConnectionBase: " << *this << " received:\n" << *mMessage);
 
                Transport::stampReceived(mMessage);
                fifo.add(mMessage);
+							
                mMessage = 0;
             }
             mConnState = NewMessage;

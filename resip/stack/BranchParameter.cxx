@@ -116,7 +116,7 @@ BranchParameter::BranchParameter(ParameterTypes::Type type,
 BranchParameter::BranchParameter(ParameterTypes::Type type)
    : Parameter(type),
      mHasMagicCookie(true),
-     mIsMyBranch(true),
+     mIsMyBranch(false), // alexei - KDDI length restriction of 32 chars per branch -  mIsMyBranch(true),
      mTransactionId(Random::getRandomHex(8)),
      mTransportSeq(1),
      mInteropMagicCookie(0),
@@ -203,7 +203,7 @@ BranchParameter::getTransactionId() const
 void
 BranchParameter::incrementTransportSequence()
 {
-   assert(mIsMyBranch);
+//   assert(mIsMyBranch); // alexei
    mTransportSeq++;
 }
 
@@ -249,7 +249,7 @@ void
 BranchParameter::reset(const Data& transactionId)
 {
    mHasMagicCookie = true;
-   mIsMyBranch = true;
+   mIsMyBranch = false;                // alexei
    delete mInteropMagicCookie;
    mInteropMagicCookie = 0;   
 

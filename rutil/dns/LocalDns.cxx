@@ -90,7 +90,7 @@ void
 LocalDns::lookup(const char* target, unsigned short type, ExternalDnsHandler* handler, void* userData)
 {
    mTarget = target;
-   ares_query(mChannel, target, C_IN, type, LocalDns::localCallback, new Payload(handler, userData));
+   ares_search(mChannel, target, C_IN, type, LocalDns::localCallback, new Payload(handler, userData));
 }
 
 void LocalDns::message(const char* file, unsigned char* buf, int& len)

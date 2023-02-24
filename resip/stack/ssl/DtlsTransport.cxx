@@ -333,6 +333,8 @@ DtlsTransport::_read( FdSet& fdset )
    message->setSource( tuple ) ;
    //DebugLog (<< "Received from: " << tuple);
    
+	LogInboundMessage((char *)pt, len , tuple);
+	
    // Tell the SipMessage about this datagram buffer.
    message->addBuffer( (char *)pt ) ;
    

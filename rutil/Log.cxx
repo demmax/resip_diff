@@ -311,12 +311,18 @@ Log::tags(Log::Level level,
    char buffer[256];
    Data ts(Data::Borrow, buffer, sizeof(buffer));
 #if defined( __APPLE__ )
-  strm << mDescriptions[level+1] << Log::delim
-        << timestamp(ts) << Log::delim  
-        << mAppName << Log::delim
-        << subsystem << Log::delim 
-        << pthread_self() << Log::delim
-        << pfile << ":" << line;
+  strm 
+//  << mDescriptions[level+1] << Log::delim
+//  << timestamp(ts) << Log::delim  
+	//alexkr // anatol
+#if 1
+//  << mAppName << Log::delim
+//	<< subsystem << Log::delim
+//  << pthread_self() << Log::delim
+ 	<< pfile << ":" << line;
+#else
+	<< subsystem;
+#endif
 #elif defined( WIN32 )
    const char* file = pfile + strlen(pfile);
    while (file != pfile &&
@@ -328,20 +334,22 @@ Log::tags(Log::Level level,
    {
       ++file;
    }
-   strm << mDescriptions[level+1] << Log::delim
-        << timestamp(ts) << Log::delim  
-        << mAppName << Log::delim
-        << subsystem << Log::delim 
-        << GetCurrentThreadId() << Log::delim
+   strm 
+//       << mDescriptions[level+1] << Log::delim
+//        << timestamp(ts) << Log::delim  
+//        << mAppName << Log::delim
+//        << subsystem << Log::delim 
+//        << GetCurrentThreadId() << Log::delim
         << file << ":" << line;
 #else // #if defined( WIN32 ) || defined( __APPLE__ )
-   strm << mDescriptions[level+1] << Log::delim
-        << timestamp(ts) << Log::delim  
+   strm 
+//       << mDescriptions[level+1] << Log::delim
+//        << timestamp(ts) << Log::delim  
 //        << mHostname << Log::delim  
-        << mAppName << Log::delim
-        << subsystem << Log::delim 
+//        << mAppName << Log::delim
+//        << subsystem << Log::delim 
 //        << mPid << Log::delim
-        << pthread_self() << Log::delim
+//        << pthread_self() << Log::delim
         << pfile << ":" << line;
 #endif
    return strm;
@@ -359,7 +367,7 @@ Data&
 Log::timestamp(Data& res) 
 {
    char* datebuf = const_cast<char*>(res.data());
-   const unsigned int datebufSize = 256;
+   const size_t datebufSize = 256;
    res.clear();
    
 #ifdef WIN32 
@@ -399,7 +407,7 @@ Log::timestamp(Data& res)
       measure to the nearest millisecond. */
    sprintf(msbuf, ".%3.3ld", long(tv.tv_usec / 1000));
 
-   int datebufCharsRemaining = datebufSize - strlen (datebuf);
+   size_t datebufCharsRemaining = datebufSize - strlen (datebuf);
    strncat (datebuf, msbuf, datebufCharsRemaining - 1);
 
    datebuf[datebufSize - 1] = '\0'; /* Just in case strncat truncated msbuf,
@@ -407,7 +415,7 @@ Log::timestamp(Data& res)
                                        the end, instead of a null terminator */
 
    // ugh, resize the Data
-   res.at(strlen(datebuf)-1);
+   res.at(static_cast<Data::size_type>(strlen(datebuf)-1));
    return res;
 }
 
@@ -682,7 +690,7 @@ Log::Guard::Guard(resip::Log::Level level,
    mStream(mData.clear())
 {
 	
-   if (resip::Log::getLoggerData().mType != resip::Log::OnlyExternalNoHeaders)
+   if (resip::Log::getLoggerData().mType != resip::Log::OnlyExternalNoHeaders && line != 0)
    {
       Log::tags(mLevel, mSubsystem, mFile, mLine, mStream);
       mStream << resip::Log::delim;

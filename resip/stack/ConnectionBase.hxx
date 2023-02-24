@@ -95,8 +95,8 @@ class ConnectionBase
    private:
       SipMessage* mMessage;
       char* mBuffer;
-      size_t mBufferPos;
-      size_t mBufferSize;
+      UInt32 mBufferPos;
+      UInt32 mBufferSize;
 
       static char connectionStates[MAX][32];
       UInt64 mLastUsed;

@@ -10,7 +10,7 @@
 #include "rutil/HashMap.hxx"
 
 #ifndef RESIP_DATA_LOCAL_SIZE
-#define RESIP_DATA_LOCAL_SIZE 16
+#define RESIP_DATA_LOCAL_SIZE 30
 #endif
 
 class TestData;
@@ -65,7 +65,7 @@ class Data
    public:
       RESIP_HeapCount(Data);
 
-      typedef size_t size_type;
+      typedef UInt32 size_type;
 
       Data();
 
@@ -126,14 +126,14 @@ class Data
 
         @param length Number of bytes in the buffer
       */
-      Data(const char* buffer, int length);
+      Data(const char* buffer, size_type length);
 
       /**
         Creates a data with the contents of the buffer.
 
         @param length Number of bytes in the buffer
       */
-      Data(const unsigned char* buffer, int length);
+      Data(const unsigned char* buffer, size_type length);
 
       Data(const Data& data);
 
@@ -241,7 +241,7 @@ class Data
         @see ShareEnum
       */
 
-      Data(ShareEnum, const char* buffer, int length);
+      Data(ShareEnum, const char* buffer, size_type length);
 
       /**
         Takes a null-terminated string and creates a buffer.
@@ -543,6 +543,12 @@ class Data
       */
       Data trunc(size_type trunc) const;
 
+	
+	/**
+	 self-explanatory.
+	 */
+	void trimTrailingWhitespace();
+	
       /**
         Clears the contents of this Data. This call does not modify
         the capacity of the Data.
@@ -624,6 +630,8 @@ class Data
       */
       int replace(const Data& match, const Data& target);
       
+	  Data stripNonDigits(bool stripPlus=true) const;
+      
       /**
         Constant that represents a zero-length data.
       */
@@ -662,12 +670,12 @@ class Data
         @param c Pointer to the buffer to hash
         @param size Number of bytes to be hashed
       */
-      static size_t rawHash(const unsigned char* c, size_t size);
+      static UInt32 rawHash(const unsigned char* c, size_type size);
 
       /**
         Creates a 32-bit hash based on the contents of this Data.
       */
-      size_t hash() const;
+      UInt32 hash() const;
 
       /**
         Creates a 32-bit hash based on the contents of the indicated
@@ -676,13 +684,13 @@ class Data
         @param c Pointer to the buffer to hash
         @param size Number of bytes to be hashed
       */
-      static size_t rawCaseInsensitiveHash(const unsigned char* c, size_t size);
+      static UInt32 rawCaseInsensitiveHash(const unsigned char* c, size_type size);
 
       /**
         Creates a 32-bit hash based on the contents of this Data, after
         normalizing any alphabetic characters to lowercase.
       */
-      size_t caseInsensitivehash() const;
+      UInt32 caseInsensitivehash() const;
 
       /**
         Performs escaping of this Data according to the indicated
@@ -706,7 +714,7 @@ class Data
       /**
         @deprecated use Data(ShareEnum ...)
       */
-      Data(const char* buffer, int length, bool);
+      Data(const char* buffer, size_type length, bool);
 
       /**
         Copies the contents of this data to a new buffer if the
@@ -725,12 +733,12 @@ class Data
 	  Larger LocalAlloc makes for larger objects that have Data members but
 	  bulk allocation/deallocation of Data  members. */
       enum {LocalAlloc = RESIP_DATA_LOCAL_SIZE };
-      char mPreBuffer[LocalAlloc+1];
 
-      size_type mSize;
       char* mBuf;
+      size_type mSize;
       size_type mCapacity;
-      ShareEnum mMine;
+      char mPreBuffer[LocalAlloc+1];
+      char mMine;
       // The invariant for a Data with !mMine is mSize == mCapacity
 
       static const bool isCharHex[256];

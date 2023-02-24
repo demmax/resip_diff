@@ -25,6 +25,7 @@ class Token : public ParserCategory
       Token(const Token&);
       Token& operator=(const Token&);
       bool isEqual(const Token& rhs) const;
+	  bool isEqualNoCase(const Token & rhs) const;
       bool operator==(const Token& rhs) const;
       bool operator!=(const Token& rhs) const;
       bool operator<(const Token& rhs) const;

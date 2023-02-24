@@ -16,6 +16,10 @@ class SipMessage;
 class Connection;
 class Compression;
 
+
+void LogOutboundMessage(const SipMessage &msg, const Tuple &transport);
+void LogInboundMessage(const char *buf, int length, const Tuple &transport);
+	
 class Transport
 {
    public:

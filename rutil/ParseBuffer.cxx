@@ -275,7 +275,7 @@ ParseBuffer::Pointer
 ParseBuffer::skipToChars(const char* cs)
 {
    assert(cs);
-   unsigned int l = strlen(cs);
+   size_t l = strlen(cs);
 
    const char* rpos;
    const char* cpos;
@@ -283,7 +283,7 @@ ParseBuffer::skipToChars(const char* cs)
    {
       rpos = mPosition;
       cpos = cs;
-      for (unsigned int i = 0; i < l; i++)
+      for (size_t i = 0; i < l; i++)
       {
          if (*cpos++ != *rpos++)
          {
@@ -654,7 +654,7 @@ ParseBuffer::dataUnescaped(Data& dataToUse, const char* start) const
   copy:
    if ((size_t)(mPosition-start) > dataToUse.mCapacity)
    {
-      dataToUse.resize(mPosition-start, false);
+      dataToUse.resize(static_cast<Data::size_type>(mPosition-start), false);
    }
 
    char* target = dataToUse.mBuf;
@@ -700,7 +700,7 @@ ParseBuffer::dataUnescaped(Data& dataToUse, const char* start) const
       }
    }
    *target = 0;
-   dataToUse.mSize = target - dataToUse.mBuf;   
+   dataToUse.mSize = static_cast<Data::size_type>(target - dataToUse.mBuf);
 }
 
 Data
@@ -712,7 +712,7 @@ ParseBuffer::data(const char* start) const
       fail(__FILE__, __LINE__,"Bad anchor position");
    }
 
-   Data data(start, mPosition - start);
+   Data data(start, static_cast<Data::size_type>(mPosition - start));
    return data;
 }
 
@@ -724,7 +724,8 @@ ParseBuffer::integer()
       fail(__FILE__, __LINE__,"Expected a digit, got eof ");
    }
 
-   char c = *position();
+	//alexkr: submit to community?
+   unsigned char c = *position();
 
    int signum = 1;
    if (c == '-')
@@ -742,7 +743,7 @@ ParseBuffer::integer()
    if (!isdigit(c))
    {
        Data msg("Expected a digit, got: ");
-       msg += Data(mPosition, (mEnd - mPosition));
+       msg += Data(mPosition, static_cast<Data::size_type>(mEnd - mPosition));
       fail(__FILE__, __LINE__,msg);
    }
    
@@ -778,7 +779,7 @@ ParseBuffer::uInt8()
    if (!isdigit(c))
    {
       Data msg("Expected a digit, got: ");
-      msg += Data(mPosition, (mEnd - mPosition));
+      msg += Data(mPosition, static_cast<Data::size_type>(mEnd - mPosition));
       fail(__FILE__, __LINE__,msg);
    }
    
@@ -816,7 +817,7 @@ ParseBuffer::uInt32()
    if (!isdigit(c))
    {
       Data msg("Expected a digit, got: ");
-      msg += Data(mPosition, (mEnd - mPosition));
+      msg += Data(mPosition, static_cast<Data::size_type>(mEnd - mPosition));
       fail(__FILE__, __LINE__,msg);
    }
    
@@ -852,7 +853,7 @@ ParseBuffer::uInt64()
    if (!isdigit(c))
    {
       Data msg("Expected a digit, got: ");
-      msg += Data(mPosition, (mEnd - mPosition));
+      msg += Data(mPosition, static_cast<Data::size_type>(mEnd - mPosition));
       fail(__FILE__, __LINE__,msg);
    }
    
@@ -886,7 +887,7 @@ ParseBuffer::floatVal()
          skipChar();
          const char* pos = mPosition;
          mant = float(integer());
-         int s = mPosition - pos;
+         size_t s = mPosition - pos;
          while (s--)
          {
             mant /= 10.0;
@@ -897,7 +898,7 @@ ParseBuffer::floatVal()
    catch (ParseException&)
    {
       Data msg("Expected a floating point value, got: ");
-      msg += Data(s, mPosition - s);
+      msg += Data(s, static_cast<Data::size_type>(mPosition - s));
       fail(__FILE__, __LINE__,msg);
       return 0.0;
    }
@@ -939,7 +940,7 @@ ParseBuffer::qVal()
    catch (ParseException&)
    {
       Data msg("Expected a floating point value, got: ");
-      msg += Data(s, mPosition - s);
+      msg += Data(s, static_cast<Data::size_type>(mPosition - s));
       fail(__FILE__, __LINE__,msg);
       return 0;
    }
@@ -1047,7 +1048,7 @@ ParseBuffer::fail(const char* file, unsigned int line, const Data& detail) const
 
     ds << "in context: " << mErrorContext
        << std::endl
-       << escapeAndAnnotate(mBuff, mEnd - mBuff, mPosition);
+       << escapeAndAnnotate(mBuff, static_cast<unsigned int>(mEnd - mBuff), mPosition);
     ds.flush();
 
    throw ParseException(errmsg, mErrorContext, file, line);

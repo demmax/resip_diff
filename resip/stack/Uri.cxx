@@ -768,12 +768,18 @@ Uri::parse(ParseBuffer& pb)
    {
       pb.reset(start);
       start = pb.position();
-      pb.skipToOneOf(":@");
+      pb.skipToOneOf(":@;");
 #ifdef HANDLE_CHARACTER_ESCAPING
       pb.dataUnescaped(mUser, start);
 #else
       pb.data(mUser, start);
 #endif
+      if (!pb.eof() && *pb.position() == Symbols::SEMI_COLON[0])
+      {
+         const char* anchor = pb.skipChar();
+         pb.skipToOneOf(":@");
+         pb.data(mUserParameters, anchor);
+      }
       if (!pb.eof() && *pb.position() == Symbols::COLON[0])
       {
          start = pb.skipChar();

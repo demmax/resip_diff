@@ -109,7 +109,7 @@ BaseTimeLimitTimerQueue::add(const Timer& timer)
 int
 BaseTimerQueue::size() const
 {
-   return mTimers.size();
+   return static_cast<int>(mTimers.size());
 }
 
 bool
@@ -155,7 +155,7 @@ TimerQueue::process()
       std::multiset<Timer>::iterator end = mTimers.upper_bound(now);
       for (std::multiset<Timer>::iterator i = mTimers.begin(); i != end; ++i)
       {
-         mFifo.add(new TimerMessage(i->mTransactionId, i->mType, i->mDuration));
+          mFifo.add(new TimerMessage(i->mTransactionId, i->mType, i->mDuration, i->getId()));
       }
       mTimers.erase(mTimers.begin(), end);
    }
