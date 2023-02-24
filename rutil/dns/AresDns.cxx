@@ -421,7 +421,7 @@ AresDns::errorMessage(long errorCode)
 {
    const char* aresMsg = ares_strerror(errorCode);
 
-   int len = strlen(aresMsg);
+   size_t len = strlen(aresMsg);
    char* errorString = new char[len+1];
 
    strncpy(errorString, aresMsg, len);

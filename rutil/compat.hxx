@@ -1,9 +1,9 @@
 #if !defined(RESIP_COMPAT_HXX)
-#define RESIP_COMPAT_HXX 
+#define RESIP_COMPAT_HXX
 
 /**
    @file
-   This file is used to handle compatibility fixes/tweaks so reSIProcate can 
+   This file is used to handle compatibility fixes/tweaks so reSIProcate can
    function on multiple platforms.
 */
 
@@ -31,7 +31,7 @@
 #endif
 
 #ifdef WIN32
-// !cj! TODO would be nice to remove this 
+// !cj! TODO would be nice to remove this
 #  ifndef __GNUC__
 #    pragma warning(disable : 4996)
 #  endif
@@ -46,7 +46,7 @@
 #endif // UNDER_CE
 #endif
 
-#if defined(__APPLE__) 
+#if defined(__APPLE__)
 #  if !defined(MAC_OS_X_VERSION_MIN_REQUIRED) || MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_2
       // you don't include the SDK or you're running 10.3 or above
       // note: this will fail on 10.2 if you don't include the SDK
@@ -56,7 +56,7 @@
       typedef int socklen_t;
 #  endif
 #  ifdef __MWERKS__ /* this is a <limits.h> bug filed with Apple, Radar# 3657629. */
-#    ifndef __SCHAR_MAX__ 
+#    ifndef __SCHAR_MAX__
 #      define __SCHAR_MAX__ 127
 #    endif
 #  endif
@@ -107,14 +107,14 @@ template<typename _Tp>
 inline const _Tp&
 resipMin(const _Tp& __a, const _Tp& __b)
 {
-   if (__b < __a) return __b; return __a;
+   return __b < __a ? __b : __a;
 }
 
 template<typename _Tp>
 inline const _Tp&
-resipMax(const _Tp& __a, const _Tp& __b) 
+resipMax(const _Tp& __a, const _Tp& __b)
 {
-   if (__a < __b) return __b; return __a;
+   return __a < __b ? __b : __a;
 }
 
 }
@@ -145,14 +145,14 @@ typedef unsigned int   UInt32;
 #  define REASONABLE_TEMPLATES
 #endif
 
-// .bwc. This is the only place we check for USE_IPV6 in a header file. This 
+// .bwc. This is the only place we check for USE_IPV6 in a header file. This
 // code has no effect if USE_IPV6 is not set, so this should only kick in when
 // we're building the resip libs. If someone sets USE_IPV6 while building
-// against the resip libs, no resip header file will care. 
+// against the resip libs, no resip header file will care.
 #ifdef USE_IPV6
 #ifndef IPPROTO_IPV6
 #if(_WIN32_WINNT >= 0x0501)   // Some versions of the windows SDK define IPPROTO_IPV6 differently - always enable IP v6 if USE_IPV6 and _WIN32_WINNT >= 0x0501
-#define IPPROTO_IPV6 ::IPPROTO_IPV6  
+#define IPPROTO_IPV6 ::IPPROTO_IPV6
 #else
 #ifdef _MSC_VER
 #define __STR2__(x) #x
@@ -171,22 +171,22 @@ typedef unsigned int   UInt32;
 #endif
 
 /* ====================================================================
- * The Vovida Software License, Version 1.0 
- * 
+ * The Vovida Software License, Version 1.0
+ *
  * Copyright (c) 2000 Vovida Networks, Inc.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
- * 
+ *
  * 3. The names "VOCAL", "Vovida Open Communication Application Library",
  *    and "Vovida Open Communication Application Library (VOCAL)" must
  *    not be used to endorse or promote products derived from this
@@ -196,7 +196,7 @@ typedef unsigned int   UInt32;
  * 4. Products derived from this software may not be called "VOCAL", nor
  *    may "VOCAL" appear in their name, without prior written
  *    permission of Vovida Networks, Inc.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND
@@ -210,6 +210,6 @@ typedef unsigned int   UInt32;
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
- * 
+ *
  * ====================================================================
  */

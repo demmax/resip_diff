@@ -109,7 +109,7 @@ BaseTimeLimitTimerQueue::add(const Timer& timer)
 int
 BaseTimerQueue::size() const
 {
-   return mTimers.size();
+   return static_cast<int>(mTimers.size());
 }
 
 bool

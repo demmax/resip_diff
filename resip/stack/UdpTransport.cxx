@@ -363,7 +363,7 @@ UdpTransport::process(FdSet& fdset)
       }
 
       // no pp error
-      int used = unprocessedCharPtr - buffer;
+      int used = static_cast<int>(unprocessedCharPtr - buffer);
 
       if (used < len)
       {
@@ -434,6 +434,7 @@ UdpTransport::process(FdSet& fdset)
 #endif
 
       mStateMachineFifo.add(message);
+	   	      
    }
 }
 

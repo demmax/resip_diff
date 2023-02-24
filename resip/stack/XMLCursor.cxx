@@ -66,7 +66,7 @@ XMLCursor::XMLCursor(const ParseBuffer& pb)
    {
       StackLog(<< "removing comments");
       lPb.reset(start);
-      mData.reserve(lPb.end() - lPb.start());
+      mData.reserve(static_cast<Data::size_type>(lPb.end() - lPb.start()));
 
       const char* anchor = start;
       {

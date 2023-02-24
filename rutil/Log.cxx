@@ -399,7 +399,7 @@ Log::timestamp(Data& res)
       measure to the nearest millisecond. */
    sprintf(msbuf, ".%3.3ld", long(tv.tv_usec / 1000));
 
-   int datebufCharsRemaining = datebufSize - strlen (datebuf);
+   size_t datebufCharsRemaining = datebufSize - strlen (datebuf);
    strncat (datebuf, msbuf, datebufCharsRemaining - 1);
 
    datebuf[datebufSize - 1] = '\0'; /* Just in case strncat truncated msbuf,
@@ -407,7 +407,7 @@ Log::timestamp(Data& res)
                                        the end, instead of a null terminator */
 
    // ugh, resize the Data
-   res.at(strlen(datebuf)-1);
+   res.at(static_cast<Data::size_type>(strlen(datebuf)-1));
    return res;
 }
 

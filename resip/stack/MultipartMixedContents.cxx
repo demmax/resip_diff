@@ -211,7 +211,7 @@ MultipartMixedContents::parse(ParseBuffer& pb)
       pb.skipToTermCRLF();
       pb.assertNotEof();
 
-      ParseBuffer subPb(typeStart, pb.position() - typeStart);
+      ParseBuffer subPb(typeStart, static_cast<unsigned int>(pb.position() - typeStart));
       Mime contentType;
       contentType.parse(subPb);
       
@@ -231,7 +231,7 @@ MultipartMixedContents::parse(ParseBuffer& pb)
       // create contents against body
       mContents.push_back(createContents(contentType, tmp));
       // pre-parse headers
-      ParseBuffer headersPb(headerStart, bodyStart-4-headerStart);
+      ParseBuffer headersPb(headerStart, static_cast<unsigned int>(bodyStart-4-headerStart));
       mContents.back()->preParseHeaders(headersPb);
 
       pb.skipN(boundary.size());

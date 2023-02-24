@@ -25,8 +25,8 @@ ifeq ($(BUILD_TFM),yes)
 DEFAULTS += tfm
 endif
 
-default: $(DEFAULTS)
-#default: repro dum tests
+#default: $(DEFAULTS)
+default: resiprocate
 
 stack: dum tests
 
@@ -65,14 +65,13 @@ presSvr: resiprocate
 	$(MAKE) -C presSvr
 
 apps: dum
-	$(MAKE) -C apps
 
 return: return-server return-client
 
 reTurn: return
 
 reTURN: return
-	
+
 return-server: rutil
 	$(MAKE) -C reTurn
 
@@ -150,10 +149,17 @@ else
    ARES_PREFIX_ARG=--prefix=${ARES_PREFIX}
 endif
 
+ARES_EXTRA_CFLAGS=
+ifeq ($(OSTYPE),Linux)
+ifeq ($(DISTRO),Ubuntu)
+   ARES_EXTRA_CFLAGS=CFLAGS=-fPIC
+endif
+endif
+
 contrib/ares-build.$(OS_ARCH)/Makefile:
 	mkdir -p contrib/ares-build.$(OS_ARCH)
 	cd contrib/ares-build.$(OS_ARCH) && \
-	  ../ares/configure ${ARES_IPV6} ${ARES_PREFIX_ARG} ${CONFIGURE_ARGS}
+	  ../ares/configure ${ARES_IPV6} ${ARES_PREFIX_ARG} ${CONFIGURE_ARGS} ${ARES_EXTRA_CFLAGS}
 
 configure_ares: contrib/ares-build.$(OS_ARCH)/Makefile
 
