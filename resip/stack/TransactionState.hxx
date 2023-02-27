@@ -3,6 +3,7 @@
 
 #include <iosfwd>
 #include <memory>
+#include "rutil/Timer.hxx"
 #include "rutil/dns/DnsHandler.hxx"
 #include "resip/stack/Transport.hxx"
 #include "rutil/HeapInstanceCounter.hxx"
@@ -18,6 +19,7 @@ class TransactionController;
 class TransactionUser;
 class NameAddr;
 class Via;
+class SetTransactionMessageFilter;
 
 class TransactionState : public DnsHandler
 {
@@ -86,7 +88,10 @@ class TransactionState : public DnsHandler
       bool isReliabilityIndication(TransactionMessage* msg) const;
       bool isSentIndication(TransactionMessage* msg) const;
       bool isAbandonServerTransaction(TransactionMessage* msg) const;
-      bool isCancelClientTransaction(TransactionMessage* msg) const;
+      bool isSilentlyAbandonServerTransaction(TransactionMessage* msg) const;
+      static bool isSetTransactionMessageFilter(TransactionMessage* msg);
+      static bool isCancelClientTransaction(TransactionMessage* msg);
+      static bool isCancelClientNonInviteTransaction(TransactionMessage* msg);
       void sendToTU(TransactionMessage* msg) const;
       static void sendToTU(TransactionUser* tu, TransactionController& controller, TransactionMessage* msg);
       void sendToWire(TransactionMessage* msg, bool retransmit=false);
@@ -110,7 +115,10 @@ class TransactionState : public DnsHandler
 
       void saveOriginalContactAndVia(const SipMessage& msg);
       void restoreOriginalContactAndVia();
-      
+
+      SetTransactionMessageFilter* mFilter;
+      Timer::Id mTryingTimerId;
+
       TransactionController& mController;
       
       Machine mMachine;

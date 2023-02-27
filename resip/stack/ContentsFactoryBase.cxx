@@ -17,13 +17,20 @@ ContentsFactoryBase::ContentsFactoryBase(const Mime& contentType)
 
 ContentsFactoryBase::~ContentsFactoryBase()
 {
-   HashMap<Mime, ContentsFactoryBase*>::iterator i;
-   i = ContentsFactoryBase::getFactoryMap().find(mContentType);
-   ContentsFactoryBase::getFactoryMap().erase(i);
-   if (ContentsFactoryBase::getFactoryMap().size() == 0)
-   {
-      delete &ContentsFactoryBase::getFactoryMap();
-   }
+	//alexkr: we can override Content class factories
+	HashMap<Mime, ContentsFactoryBase*>::iterator i = ContentsFactoryBase::getFactoryMap().find(mContentType);
+	if (i != ContentsFactoryBase::getFactoryMap().end()) {
+        ContentsFactoryBase::getFactoryMap().erase(i);		
+	}
+	if (ContentsFactoryBase::getFactoryMap().size() == 0) {
+		deleteFactoryMap();		
+	}
+}
+
+void ContentsFactoryBase::deleteFactoryMap  ()
+{
+    if  (ContentsFactoryBase::FactoryMap)
+        delete ContentsFactoryBase::FactoryMap, ContentsFactoryBase::FactoryMap = 0;
 }
 
 HashMap<Mime, ContentsFactoryBase*>& 

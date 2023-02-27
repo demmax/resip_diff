@@ -14,6 +14,7 @@ class ApplicationMessage;
 class StatisticsManager;
 class SipStack;
 class Compression;
+class SetTransactionMessageFilter;
 
 class TransactionController
 {
@@ -67,8 +68,11 @@ class TransactionController
       }
 
       void abandonServerTransaction(const Data& tid);
+      void silentlyAbandonServerTransaction(const Data& tid);
+      void setTransactionMessageFilter(SetTransactionMessageFilter* filter);
 
       void cancelClientInviteTransaction(const Data& tid);
+      void cancelClientNonInviteTransaction(const Data& tid);
 
    private:
       TransactionController(const TransactionController& rhs);

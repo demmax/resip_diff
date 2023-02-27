@@ -324,7 +324,7 @@ void
 Contents::preParseHeaders(ParseBuffer& pb)
 {
    const char* start = pb.position();
-   Data all( start, pb.end()-start);
+   Data all( start, static_cast<Data::size_type>(pb.end()-start));
 
    Data headerName;
 
@@ -343,7 +343,7 @@ Contents::preParseHeaders(ParseBuffer& pb)
       pb.skipToTermCRLF();
 
       Headers::Type type = Headers::getType(headerName.data(), headerName.size());
-      ParseBuffer subPb(anchor, pb.position() - anchor);
+      ParseBuffer subPb(anchor, static_cast<Data::size_type>(pb.position() - anchor));
 
       switch (type)
       {
@@ -475,8 +475,8 @@ Contents::encodeHeaders(EncodeStream& str) const
    {
       str <<  "Content-Languages" << Symbols::COLON[0] << Symbols::SPACE[0];
 
-      int count = 0;
-      int size = header(h_ContentLanguages).size();
+      size_t count = 0;
+      size_t size = header(h_ContentLanguages).size();
 
       for (H_ContentLanguages::Type::iterator 
               i = header(h_ContentLanguages).begin();

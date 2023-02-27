@@ -25,7 +25,6 @@ class ParserContainer : public ParserContainerBase
       typedef const value_type* const_pointer;
       typedef value_type& reference;
       typedef const value_type& const_reference;
-      typedef ptrdiff_t difference_type;
 
       ParserContainer()
          : ParserContainerBase(Headers::UNKNOWN)
@@ -134,7 +133,7 @@ class ParserContainer : public ParserContainerBase
               i != mParsers.end(); ++i)
          {
             // operator== defined by default, but often not usefully
-            if (rhs.isEqual(*static_cast<T*>(*i)))
+            if (rhs.isEqualNoCase(*static_cast<T*>(*i)))
             {
                return true;
             }

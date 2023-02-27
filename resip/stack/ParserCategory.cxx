@@ -200,17 +200,36 @@ ParserCategory::parseParameters(ParseBuffer& pb)
 
          if((int)(keyEnd-keyStart) != 0)
          {
-            ParameterTypes::Type type = ParameterTypes::getType(keyStart, (keyEnd - keyStart));
+            ParameterTypes::Type type = ParameterTypes::getType(keyStart, static_cast<unsigned int>(keyEnd - keyStart));
             if (type == ParameterTypes::UNKNOWN)
             {
-               mUnknownParameters.push_back(new UnknownParameter(keyStart, 
-                                                                 int((keyEnd - keyStart)), pb, " \t\r\n;?>"));
-            }
+				//alexkr: [possibly; hard to remember] related to bad third-party implementation
+				if (keyEnd == keyStart)
+				{
+					//alexkr. Bad param. Should in fact throw the Exception and discard the message, but it is not feasible
+					//with lazy parser
+					ErrLog( << "syntax error: empty parameter detected while parsing message");
+				}
+				else
+					mUnknownParameters.push_back(new UnknownParameter(keyStart, 
+																	  int((keyEnd - keyStart)), pb, " \t\r\n;?>"));
+			}
             else
             {
-               // invoke the particular factory
-               mParameters.push_back(ParameterTypes::ParameterFactories[type](type, pb, " \t\r\n;?>"));
-            }
+				Parameter* p = ParameterTypes::ParameterFactories[type](type, pb, " \t\r\n;?>");
+				if (p->bad())
+				{
+					//alexkr. Bad param. Should in fact throw the Exception and discard the message, but it is not feasible
+					//with lazy parser
+					ErrLog( << "bad param '" << resip::ParameterTypes::ParameterNames[type] << "' syntax");
+					delete p;
+				}
+				else
+				{
+					// invoke the particular factory
+					mParameters.push_back(p);
+				}
+			}
          }
       }
       else
@@ -509,6 +528,16 @@ defineParam(url, "url", QuotedDataParameter, "draft-ietf-sip-content-indirect-me
 defineParam(sigcompId, "sigcomp-id", QuotedDataParameter, "draft-ietf-rohc-sigcomp-sip");
 
 defineParam(addTransport, "addTransport", ExistsParameter, "");
+
+//alexkr
+defineParam(orbit, "orbit", DataParameter, "Polycom parking orbit implementation");
+defineParam(joined, "joined", ExistsParameter, "MCU joined notification");
+defineParam(left, "left", ExistsParameter, "MCU left notification");
+defineParam(cterm, "cterm", DataParameter, "MCU termination policy");
+defineParam(ctype, "ctype", DataParameter, "MCU termination type");
+defineParam(hadd, "hadd", DataParameter, "MCU host address add");
+defineParam(hdel, "hdel", DataParameter, "MCU host address delete");
+
 
 Data
 ParserCategory::commutativeParameterHash() const

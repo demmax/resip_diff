@@ -113,5 +113,9 @@ min-se, Headers::MinSE
 refer-sub, Headers::ReferSub
 remote-party-id, Headers::RemotePartyId
 history-info, Headers::HistoryInfo
+p-ipcm-extensions, Headers::IPCMExtensions
+p-mref-to, Headers::PMrefTo
+p-conf-policy, Headers::PConfPolicy
+p-conf-party, Headers::PConfParty
 %%
 }

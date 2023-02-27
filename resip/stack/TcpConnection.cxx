@@ -80,7 +80,7 @@ TcpConnection::read( char* buf, int count )
 int 
 TcpConnection::write( const char* buf, const int count )
 {
-   DebugLog (<< "Writing " << buf);
+   //DebugLog (<< "Writing " << buf);
 
    assert(buf);
    assert(count > 0);

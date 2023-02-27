@@ -78,11 +78,16 @@ TlsDestructorInitializer::TlsDestructorInitializer()
 }
 TlsDestructorInitializer::~TlsDestructorInitializer()
 {
+/*
+   This code was commented out by Green.
+   It creates a memory leak, but prevents a crash on exit.
+
    if (--mInstanceCounter == 0)
    {
       delete ThreadIf::mTlsDestructorsMutex;
       delete ThreadIf::mTlsDestructors;
    }
+*/
 }
 #endif
 

@@ -521,6 +521,8 @@ class Helper
       // the tree.
       static std::auto_ptr<SdpContents> getSdp(Contents* tree);
 
+	  static void setCallidHostPart(const Data& hostPart);
+
    private:
       static Data qopOption(const Auth& challenge);
       class NonceHelperPtr
@@ -531,6 +533,7 @@ class Helper
             NonceHelper *mNonceHelper;
       };
       static NonceHelperPtr mNonceHelperPtr;
+	  static Data mCallidHostPart;
 };
 
 }

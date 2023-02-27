@@ -30,7 +30,10 @@ class DataParameter : public Parameter
       
       virtual Parameter* clone() const;
       virtual EncodeStream& encode(EncodeStream& stream) const;
-      
+      	
+	//alexkr: 2check: being used
+	virtual bool bad() const {return mValue.empty();}
+	
    protected:
       DataParameter(const DataParameter& other) 
          : Parameter(other), 

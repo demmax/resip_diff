@@ -56,7 +56,7 @@ DnsUtil::lookupARecords(const Data& host)
    struct hostent hostbuf; 
    char buffer[8192];
    result = gethostbyname_r( host.c_str(), &hostbuf, buffer, sizeof(buffer), &herrno );
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(WIN32) || defined (__FreeBSD__)
    // gethostbyname in os/x is thread-safe...
    // http://developer.apple.com/technotes/tn2002/pdf/tn2053.pdf
    result = gethostbyname( host.c_str() );
@@ -159,7 +159,7 @@ Data
 DnsUtil::getLocalDomainName()
 {
    Data lhn(getLocalHostName());
-   size_t dpos = lhn.find(".");
+   Data::size_type dpos = lhn.find(".");
    if (dpos != Data::npos)
    {
       return lhn.substr(dpos+1);
@@ -285,7 +285,7 @@ DnsUtil::isIpV6Address(const Data& ipAddress)
    }
 
    // first character must be a hex digit or colon
-   if (!isxdigit(*ipAddress.data()) &&
+   if (!isxdigit(*((const unsigned char*)ipAddress.data())) &&
        *ipAddress.data() != ':')
    {
       return false;
@@ -711,7 +711,7 @@ inet_pton4(const char *src, u_char *dst)
       const char *pch;
 
       if ((pch = strchr(digits, ch)) != NULL) {
-         u_int newVal = *tp * 10 + (pch - digits);
+         u_int newVal = *tp * 10 + static_cast<u_int>(pch - digits);
 
          if (newVal > 255)
             return (0);
@@ -819,11 +819,11 @@ inet_pton6(const char *src, u_char *dst)
        * Since some memmove()'s erroneously fail to handle
        * overlapping regions, we'll do the shift by hand.
        */
-      const int n = tp - colonp;
-      int i;
+      const size_t n = tp - colonp;
+      size_t i;
 
       for (i = 1; i <= n; i++) {
-         endp[- i] = colonp[n - i];
+         endp[n - i] = colonp[n - i];
          colonp[n - i] = 0;
       }
       tp = endp;
