@@ -28,6 +28,7 @@ class Uri;
 class TransactionUser;
 class AsyncProcessHandler;
 class Compression;
+class SetTransactionMessageFilter;
 
 
 /**
@@ -187,6 +188,8 @@ class SipStack
       */
       const Uri& getUri() const;
 
+      void setUri(const Uri& uri) { mUri = uri; }
+
       /** 
           Interface for the TU to send a message.  Makes a copy of the
           SipMessage.  Caller is responsible for deleting the memory and may do
@@ -342,6 +345,21 @@ class SipStack
       void abandonServerTransaction(const Data& tid);
 
       /**
+         Tells the stack that the TU has silently abandoned a server transaction. This
+         is provided to allow better behavior in cases where an exception is 
+         thrown due to garbage in the request, and the code catching the 
+         exception has no way of telling whether the original request is still
+         around. This frees the TU of the obligation to respond to the request.
+         @param tid The transaction identifier for the server transaction.
+         @note This function is distinct from cancelClientInviteTransaction().
+      */
+      void silentlyAbandonServerTransaction(const Data& tid);
+
+      /* NTT */
+      void setTransactionMessageFilter(SetTransactionMessageFilter* filter);
+
+
+      /**
          Tells the stack that the TU wishes to CANCEL an INVITE request. This 
          frees the TU of the obligation to keep state on whether a 1xx has come 
          in yet before actually sending a CANCEL request, and also the 
@@ -351,6 +369,15 @@ class SipStack
          @param tid The transaction identifier of the INVITE request sent.
       */
       void cancelClientInviteTransaction(const Data& tid);
+
+      /**
+         Tells the stack that the TU wishes to CANCEL an non-INVITE request. This 
+         frees the TU of the obligation to keep state on whether a 2xx has come 
+         in yet
+         @param tid The transaction identifier of the non-INVITE request sent.
+      */
+      void cancelClientNonInviteTransaction(const Data& tid);
+
 
       /**
           Return true if the stack has new messages for the TU.  Since the addition 
@@ -522,6 +549,9 @@ class SipStack
       Compression &getCompression() { return *mCompression; }
       
       bool isFlowAlive(const resip::Tuple& flow) const;
+
+	  DnsResult* createDnsResult(DnsHandler* handler);
+
       
    private:
       /// Notify an async process handler - if one has been registered

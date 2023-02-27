@@ -181,7 +181,10 @@ struct TransitionInfo
 
 static TransitionInfo stateMachine[numStates][numCharCategories];
 
-inline void specTransition(State state,
+#ifndef __APPLE__
+inline
+#endif
+void specTransition(State state,
                            CharCategory charCategory,
                            TransitionAction action,
                            State nextState)
@@ -956,7 +959,7 @@ MsgHeaderScanner::scanChunk(char * chunk,
          case taTermStatusLine:
             if (!processMsgHeaderStatusLine(mMsg,
                                             textStartCharPtr,
-                                            charPtr - textStartCharPtr,
+                                            static_cast<unsigned int>(charPtr - textStartCharPtr),
                                             localTextPropBitMask))
             {
                result = MsgHeaderScanner::scrError;
@@ -967,7 +970,7 @@ MsgHeaderScanner::scanChunk(char * chunk,
             break;
          case taTermFieldName:
          {
-            mFieldNameLength = charPtr - textStartCharPtr;
+            mFieldNameLength = static_cast<unsigned int>(charPtr - textStartCharPtr);
             bool isMultiValueAllowed;
             lookupMsgHeaderFieldInfo(textStartCharPtr,
                                      &mFieldNameLength,
@@ -997,7 +1000,7 @@ MsgHeaderScanner::scanChunk(char * chunk,
                                               mFieldName,
                                               mFieldNameLength,
                                               textStartCharPtr,
-                                              (charPtr - textStartCharPtr) - 2,
+                                              static_cast<unsigned int>(charPtr - textStartCharPtr) - 2,
                                               localTextPropBitMask);       //^:CRLF
             goto performStartTextAction;
          case taTermValue:
@@ -1006,7 +1009,7 @@ MsgHeaderScanner::scanChunk(char * chunk,
                                               mFieldName,
                                               mFieldNameLength,
                                               textStartCharPtr,
-                                              charPtr - textStartCharPtr,
+                                              static_cast<unsigned int>(charPtr - textStartCharPtr),
                                               localTextPropBitMask);
             textStartCharPtr = 0;
             break;
@@ -1032,7 +1035,7 @@ MsgHeaderScanner::scanChunk(char * chunk,
                }
                else
                {
-                  mPrevScanChunkNumSavedTextChars = termCharPtr - textStartCharPtr;
+                  mPrevScanChunkNumSavedTextChars = static_cast<int>(termCharPtr - textStartCharPtr);
                }
                mTextPropBitMask = localTextPropBitMask;
                result = MsgHeaderScanner::scrNextChunk;

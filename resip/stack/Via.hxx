@@ -33,6 +33,7 @@ class Via : public ParserCategory
       const Data& sentHost() const;
       int& sentPort();
       int sentPort() const;
+      static void setInsertRPort(bool use);
 
       virtual void parse(ParseBuffer& pb);
       virtual ParserCategory* clone() const;
@@ -44,6 +45,7 @@ class Via : public ParserCategory
       mutable Data mTransport;
       mutable Data mSentHost;
       mutable int mSentPort;
+      static  bool mInsertRPort;
 };
 typedef ParserContainer<Via> Vias;
 

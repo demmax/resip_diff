@@ -48,7 +48,8 @@ TlsConnection::TlsConnection( Transport* transport, const Tuple& tuple,
       DebugLog( << "Trying to form TLS connection - acting as server" );
       if ( mDomain.empty() )
       {
-         ErrLog(<< "Tranport was not created with a server domain so can not act as server" ); 
+		//alexkr: submit change to community
+         ErrLog(<< "Transport was not created with a server domain so can not act as server" ); 
          throw Security::Exception("Trying to act as server but no domain specified",
                                    __FILE__,__LINE__);
       }
@@ -619,7 +620,7 @@ TlsConnection::computePeerName()
    }
 
    // print session infor       
-   SSL_CIPHER *ciph;
+   const SSL_CIPHER *ciph;
    ciph=SSL_get_current_cipher(mSsl);
    InfoLog( << "TLS sessions set up with " 
             <<  SSL_get_version(mSsl) << " "

@@ -27,7 +27,7 @@ using namespace std;
 
 bool SipMessage::checkContentLength=true;
 
-SipMessage::SipMessage(const Transport* fromWire)
+SipMessage::SipMessage(const Transport* fromWire,/*alexkr*/ int orig_datagram_length)
    : mIsDecorated(false),
      mIsBadAck200(false),     
      mIsExternal(fromWire != 0),
@@ -42,6 +42,11 @@ SipMessage::SipMessage(const Transport* fromWire)
      mCreatedTime(Timer::getTimeMicroSec()),
      mForceTarget(0),
      mTlsDomain(Data::Empty)
+	//alexkr:
+	,mOrigDatagramLength(orig_datagram_length)
+	,mFlags(SIPMSG_FLAG_NONE),
+    mTimerB(0)
+
 {
    for (int i = 0; i < Headers::MAX_HEADERS; i++)
    {
@@ -55,6 +60,11 @@ SipMessage::SipMessage(const SipMessage& from)
      mContents(0),
      mCreatedTime(Timer::getTimeMicroSec()),
      mForceTarget(0)
+	//alexkr:
+	,mOrigDatagramLength(0)
+	,mFlags(SIPMSG_FLAG_NONE)
+    ,mTimerB(from.mTimerB)
+
 {
    for (int i = 0; i < Headers::MAX_HEADERS; i++)
    {
@@ -93,6 +103,11 @@ SipMessage::operator=(const SipMessage& rhs)
       mReason = rhs.mReason;
       mForceTarget = 0;
       mTlsDomain = rhs.mTlsDomain;
+	   //alexkr:
+	   mOrigDatagramLength = rhs.mOrigDatagramLength;
+	   mFlags = rhs.mFlags;
+       mTimerB = rhs.mTimerB;
+	   
       
       for (int i = 0; i < Headers::MAX_HEADERS; i++)
       {
@@ -206,7 +221,12 @@ SipMessage::cleanUp()
    mContentsHfv = 0;
    delete mForceTarget;
    mForceTarget = 0;
+	//alexkr
+	mOrigDatagramLength = 0;
+	mFlags = SIPMSG_FLAG_NONE;
+	
 
+    // anatol - uncommented the line
    clearOutboundDecorators();
 }
 
@@ -216,7 +236,7 @@ SipMessage::make(const Data& data,  bool isExternal)
    Transport* external = (Transport*)(0xFFFF);
    SipMessage* msg = new SipMessage(isExternal ? external : 0);
 
-   size_t len = data.size();
+   unsigned int len = data.size();
    char *buffer = new char[len + 5];
 
    msg->addBuffer(buffer);
@@ -235,7 +255,7 @@ SipMessage::make(const Data& data,  bool isExternal)
    }
 
    // no pp error
-   unsigned int used = unprocessedCharPtr - buffer;
+   unsigned int used = static_cast<unsigned int>(unprocessedCharPtr - buffer);
 
    if (used < len)
    {
@@ -379,9 +399,9 @@ SipMessage::compute2543TransactionHash() const
       MD5Stream strm;
       // See section 17.2.3 Matching Requests to Server Transactions in rfc 3261
 
-//#define VONAGE_FIX
+#define VONAGE_FIX
+	   strm << header(h_RequestLine).uri().scheme();
 #ifndef VONAGE_FIX         
-      strm << header(h_RequestLine).uri().scheme();
       strm << header(h_RequestLine).uri().user();
       strm << header(h_RequestLine).uri().host();
       strm << header(h_RequestLine).uri().port();
@@ -1055,7 +1075,8 @@ SipMessage::header(const ExtensionHeader& headerName) const
         i != mUnknownHeaders.end(); i++)
    {
       // !dlb! case sensitive?
-      if (i->first == headerName.getName())
+	  // alexei - yes, read 3261 and then go to NTT
+      if (::isEqualNoCase(i->first, headerName.getName()))
       {
          HeaderFieldValueList* hfvs = i->second;
          if (hfvs->getParserContainer() == 0)
@@ -1078,7 +1099,8 @@ SipMessage::header(const ExtensionHeader& headerName)
         i != mUnknownHeaders.end(); i++)
    {
       // !dlb! case sensitive?
-      if (i->first == headerName.getName())
+	  // alexei - yes, read 3261 and then go to NTT
+      if (::isEqualNoCase(i->first, headerName.getName()))
       {
          HeaderFieldValueList* hfvs = i->second;
          if (hfvs->getParserContainer() == 0)
@@ -1102,7 +1124,7 @@ SipMessage::exists(const ExtensionHeader& symbol) const
    for (UnknownHeaders::iterator i = mUnknownHeaders.begin();
         i != mUnknownHeaders.end(); i++)
    {
-      if (i->first == symbol.getName())
+      if (::isEqualNoCase(i->first, symbol.getName()))
       {
          return true;
       }
@@ -1116,7 +1138,7 @@ SipMessage::remove(const ExtensionHeader& headerName)
    for (UnknownHeaders::iterator i = mUnknownHeaders.begin();
         i != mUnknownHeaders.end(); i++)
    {
-      if (i->first == headerName.getName())
+      if (::isEqualNoCase(i->first, headerName.getName()))
       {
          delete i->second;
          mUnknownHeaders.erase(i);
@@ -1195,6 +1217,13 @@ Data&
 SipMessage::getEncoded() 
 {
    return mEncoded;
+}
+
+//alexkr
+const Data&
+SipMessage::getEncoded() const
+{
+	return mEncoded;
 }
 
 Data&
@@ -1478,6 +1507,12 @@ defineMultiHeader(Via, "Via", Via, "RFC 3261");
 defineHeader(RAck, "RAck", RAckCategory, "RFC 3262");
 defineMultiHeader(RemotePartyId, "Remote-Party-ID", NameAddr, "draft-ietf-sip-privacy-04"); // ?bwc? Not in 3323, should we keep?
 defineMultiHeader(HistoryInfo, "History-Info", NameAddr, "RFC 4244");
+//alexkr:
+defineHeader(IPCMExtensions, "P-Ipcm-Extensions", Token, "p-ipcm-extensions");
+defineMultiHeader(PMrefTo, "P-Mref-To", NameAddr, "p-ipcm-mcu-multiple-refer-to");
+defineMultiHeader(PConfPolicy, "P-Conf-Policy", Token, "p-ipcm-mcu-conf-policy");
+defineMultiHeader(PConfParty, "P-Conf-Party", NameAddr, "p-ipcm-mcu-conf-party");
+
 
 #endif
 
@@ -1495,6 +1530,22 @@ SipMessage::setRawHeader(const HeaderFieldValueList* hfvs, Headers::Type headerT
       delete mHeaders[headerType];
       mHeaders[headerType] = new HeaderFieldValueList(*hfvs);
    }
+}
+
+void 
+SipMessage::setRawHeader(const HeaderFieldValueList* hfvs, const ExtensionHeader& symbol)
+{
+	for (UnknownHeaders::iterator i = mUnknownHeaders.begin();i != mUnknownHeaders.end(); ++i)
+	{
+		if (i->first == symbol.getName()) 
+		{
+			if (i->second != NULL)
+				delete i->second;
+			i->second = new HeaderFieldValueList(*hfvs);
+			return;
+		}
+	}
+	mUnknownHeaders.push_back(make_pair(symbol.getName(), new HeaderFieldValueList(*hfvs)));
 }
 
 void

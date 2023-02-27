@@ -228,6 +228,8 @@ NameAddr::parse(ParseBuffer& pb)
                case ParameterTypes::transport:
                case ParameterTypes::ttl:
                case ParameterTypes::user:
+					//alexkr
+			   case ParameterTypes::orbit:				
                {
                   mUri.mParameters.push_back(*it);
                   it = mParameters.erase(it);

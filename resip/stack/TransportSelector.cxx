@@ -19,6 +19,7 @@
 #include "resip/stack/ExtensionParameter.hxx"
 #include "resip/stack/Compression.hxx"
 #include "resip/stack/SipMessage.hxx"
+#include "resip/stack/SipStack.hxx"
 #include "resip/stack/TransactionState.hxx"
 #include "resip/stack/TransportFailure.hxx"
 #include "resip/stack/TransportSelector.hxx"
@@ -417,6 +418,13 @@ TransportSelector::getFirstInterface(bool is_v4, TransportType type)
 Tuple
 TransportSelector::determineSourceInterface(SipMessage* msg, const Tuple& target) const
 {
+/*
+    static Tuple *fakeOne = 0;
+    if (!fakeOne) fakeOne = new Tuple(SipStack::getHostAddress(), 0, V4, UDP);
+    DebugLog (<< "Looked up source for destination: " << target << " -> " << *fakeOne);
+    return *fakeOne;
+*/
+
    assert(msg->exists(h_Vias));
    assert(!msg->header(h_Vias).empty());
    const Via& via = msg->header(h_Vias).front();
@@ -430,7 +438,7 @@ TransportSelector::determineSourceInterface(SipMessage* msg, const Tuple& target
    else
    {
       Tuple source(target);
-#if defined(WIN32) && !defined(NO_IPHLPAPI)
+#if defined(WIN32) && !defined(NO_IPHLPAPI) && 0
       try
       {
          GenericIPAddress addr = WinCompat::determineSourceInterface(target.toGenericIPAddress());
@@ -514,9 +522,12 @@ TransportSelector::determineSourceInterface(SipMessage* msg, const Tuple& target
       // fails. I'm not sure the stack can recover from this error condition.
       if (target.isV4())
       {
+//		DebugLog( << "TransportSelector::determineSourceInterface: before connect");		  
          ret = connect(mSocket,
                        (struct sockaddr*)&mUnspecified.v4Address,
                        sizeof(mUnspecified.v4Address));
+//		DebugLog( << "TransportSelector::determineSourceInterface: after connect");
+
       }
 #ifdef USE_IPV6
       else
@@ -743,6 +754,25 @@ TransportSelector::transmit(SipMessage* msg, Tuple& target)
          // We assume that all stray responses have been discarded, so we always
          // know the transport that the corresponding request was received on
          // and this has been copied by TransactionState::sendToWire into target.transport
+
+		 //alexkr: for NTT 1230
+		 if (!target.transport) 
+         {
+			target.transport = findTransportByDest(msg,target);
+			
+            if (!target.transport) 
+            {
+				source = determineSourceInterface(msg, target);
+				target.transport = findTransportBySource(source);            
+				// .bwc. determineSourceInterface might give us a port
+				if(target.transport && source.getPort()==0)
+				{
+				   source.setPort(target.transport->port());
+				}			
+			}
+		 }
+		 //alexkr: end for NTT 1230
+
          assert(target.transport);
          
          source = target.transport->getTuple();
@@ -938,10 +968,13 @@ TransportSelector::transmit(SipMessage* msg, Tuple& target)
          msg->getCompartmentId() = remoteSigcompId;
          
          assert(!msg->getEncoded().empty());
+		  //alexkr:
+		  LogOutboundMessage(*msg, target);
+		  
          DebugLog (<< "Transmitting to " << target
                    << " tlsDomain=" << msg->getTlsDomain()
                    << " via " << source
-				   << std::endl << std::endl << encoded.escaped()
+				   //<< std::endl << std::endl << encoded.escaped()
 				   << "sigcomp id=" << remoteSigcompId);
 
          target.transport->send(target, encoded, msg->getTransactionId(),
@@ -993,6 +1026,7 @@ TransportSelector::retransmit(SipMessage* msg, Tuple& target)
    if(!msg->getEncoded().empty())
    {
       //DebugLog(<<"!ah! retransmit to " << target);
+	   LogOutboundMessage(*msg, target);	   
       target.transport->send(target, msg->getEncoded(), msg->getTransactionId(), msg->getCompartmentId());
    }
 }

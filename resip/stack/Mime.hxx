@@ -28,6 +28,11 @@ class Mime : public ParserCategory
       Mime& operator=(const Mime&);
       bool operator<(const Mime& rhs) const;
       bool isEqual(const Mime& rhs) const;
+      bool isEqualNoCase(const Mime& rhs) const
+      {
+          return isEqual(rhs);
+      }
+
       bool operator==(const Mime& rhs) const;
       bool operator!=(const Mime& rhs) const;
       

@@ -285,6 +285,13 @@ defineHeader(RAck, "RAck", RAckCategory, "RFC 3262");
 
 defineMultiHeader(Via, "Via", Via, "RFC 3261");
 
+//alexkr:
+defineHeader(IPCMExtensions, "P-Ipcm-Extensions", Token, "p-ipcm-extensions");
+defineMultiHeader(PMrefTo, "P-Mref-To", NameAddr, "p-ipcm-mcu-multiple-refer-to");
+defineMultiHeader(PConfPolicy, "P-Conf-Policy", Token, "p-ipcm-mcu-conf-policy");
+defineMultiHeader(PConfParty, "P-Conf-Party", NameAddr, "p-ipcm-mcu-conf-party");
+
+
 //Enforces string encoding of extension headers
 Headers::Type                                                          
 H_RESIP_DO_NOT_USEs::getTypeNum() const {return Headers::RESIP_DO_NOT_USE;}                                                                               

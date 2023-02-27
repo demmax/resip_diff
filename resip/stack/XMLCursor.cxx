@@ -93,7 +93,7 @@ XMLCursor::XMLCursor(const ParseBuffer& pb)
    }
    else
    {
-      mRoot = new Node(ParseBuffer(start, pb.end() - start));
+      mRoot = new Node(ParseBuffer(start, static_cast<unsigned int>(pb.end() - start)));
    }
    mCursor = mRoot;
 
@@ -195,7 +195,7 @@ XMLCursor::parseNextRootChild()
    if (*mRoot->mPb.position() == Symbols::LA_QUOTE[0])
    {
       ParseBuffer pb(mRoot->mPb.position(), 
-                     mRoot->mPb.end() - mRoot->mPb.position());
+                    static_cast<unsigned int>(mRoot->mPb.end() - mRoot->mPb.position()));
       pb.skipChar();
       if (!pb.eof() && *pb.position() == Symbols::SLASH[0])
       {
@@ -223,7 +223,7 @@ XMLCursor::parseNextRootChild()
    {
       const char* anchor = mRoot->mPb.position();
       mRoot->mPb.skipToChar(Symbols::LA_QUOTE[0]);
-      Node* leaf = new Node(ParseBuffer(anchor, mRoot->mPb.position() - anchor));
+      Node* leaf = new Node(ParseBuffer(anchor, static_cast<unsigned int>(mRoot->mPb.position() - anchor)));
       leaf->mIsLeaf = true;
       mRoot->addChild(leaf);
    }
@@ -436,7 +436,7 @@ XMLCursor::encode(EncodeStream& str, const AttributeMap& attrs)
 }
 
 XMLCursor::Node::Node(const ParseBuffer& pb)
-   : mPb(pb.position(), pb.end() - pb.position()),
+   : mPb(pb.position(), static_cast<unsigned int>(pb.end() - pb.position())),
      mParent(0),
      mChildren(),
      mNext(mChildren.begin()),
@@ -504,7 +504,7 @@ XMLCursor::Node::skipToEndTag()
    if (*(mPb.position()-1) == Symbols::SLASH[0])
    {
       mPb.skipChar();
-      mPb = ParseBuffer(mPb.start(), mPb.position() - mPb.start());
+      mPb = ParseBuffer(mPb.start(), static_cast<unsigned int>(mPb.position() - mPb.start()));
       return;
    }
 
@@ -526,7 +526,7 @@ XMLCursor::Node::skipToEndTag()
       {
          const char* anchor = mPb.position();
          mPb.skipToChar(Symbols::LA_QUOTE[0]);
-         Node* leaf = new Node(ParseBuffer(anchor, mPb.position() - anchor));
+         Node* leaf = new Node(ParseBuffer(anchor, static_cast<unsigned int>(mPb.position() - anchor)));
          leaf->mIsLeaf = true;
          addChild(leaf);
       }
@@ -556,7 +556,7 @@ XMLCursor::Node::skipToEndTag()
          {
             mPb.skipToChar(Symbols::RA_QUOTE[0]);
             mPb.skipChar();
-            mPb = ParseBuffer(mPb.start(), mPb.position() - mPb.start());
+            mPb = ParseBuffer(mPb.start(), static_cast<unsigned int>(mPb.position() - mPb.start()));
             return;
          }
          else
@@ -610,7 +610,7 @@ XMLCursor::Node::skipComments(ParseBuffer& pb)
 EncodeStream&
 resip::operator<<(EncodeStream& str, const XMLCursor::Node& node)
 {
-   Data::size_type size = node.mPb.end() - node.mPb.start();
+   Data::size_type size = static_cast<Data::size_type>(node.mPb.end() - node.mPb.start());
 
    static const Data::size_type showSize(35);
 

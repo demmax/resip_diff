@@ -128,6 +128,11 @@ class Headers
          defineMultiHeader(RemotePartyId, "Remote-Party-ID", NameAddr, "draft-ietf-sip-privacy-04"), // ?bwc? Not in 3323, should we keep?
          defineMultiHeader(HistoryInfo, "History-Info", NameAddr, "RFC 4244"),
 
+		 defineHeader(IPCMExtensions, "P-Ipcm-Extensions", Token, "p-ipcm-extensions"),
+		 defineMultiHeader(PMrefTo, "P-Mref-To", NameAddr, "p-ipcm-mcu-multiple-refer-to"),
+		 defineMultiHeader(PConfPolicy, "P-Conf-Policy", Token, "p-ipcm-mcu-conf-policy"),
+		 defineMultiHeader(PConfParty, "P-Conf-Party", NameAddr, "p-ipcm-mcu-conf-party"),
+		  
          defineMultiHeader(RESIP_DO_NOT_USE, "ShouldNotSeeThis", StringCategory, "N/A"),
          MAX_HEADERS,
          NONE

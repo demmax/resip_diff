@@ -95,6 +95,12 @@ class ThreadIf
       */
       virtual void thread() = 0;
 
+      Id __id() { return mId; }
+
+#ifdef WIN32
+      HANDLE __handle() { return mThread; }
+#endif
+
    protected:
 #ifdef WIN32
       HANDLE mThread;

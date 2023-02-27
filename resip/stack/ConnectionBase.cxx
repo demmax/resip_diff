@@ -102,6 +102,12 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
    DebugLog(<< "In State: " << connectionStates[mConnState]);
    //getConnectionManager().touch(this); -- !dcm!
    
+	
+	//alexkr:
+	const char*  buf_snapshot     = mBuffer + mBufferPos;
+	int          buf_snapshot_len = bytesRead;
+	//:alexkr
+	
   start:   // If there is an overhang come back here, effectively recursing
    
    switch(mConnState)
@@ -345,8 +351,9 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
                else
                {
                   Transport::stampReceived(mMessage);
-                  DebugLog(<< "##Connection: " << *this << " received: " << *mMessage);
+                  DebugLog(<< "##Connection: " << *this << " received:\n" << *mMessage);
                   fifo.add(mMessage);
+				   				   		   
                   mMessage = 0;
                }
 
@@ -393,7 +400,7 @@ ConnectionBase::preparseNewBytes(int bytesRead, Fifo<TransactionMessage>& fifo)
             }
             else
             {
-               DebugLog(<< "##ConnectionBase: " << *this << " received: " << *mMessage);
+               DebugLog(<< "##ConnectionBase: " << *this << " received:\n" << *mMessage);
 
                Transport::stampReceived(mMessage);
                fifo.add(mMessage);

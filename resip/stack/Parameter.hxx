@@ -21,6 +21,9 @@ class Parameter
 
       virtual Parameter* clone() const = 0;
 
+	//alexkr: 2check
+	virtual bool bad() const {return false;}
+	
       virtual EncodeStream& encode(EncodeStream& stream) const = 0;
 
       virtual bool isQuoted() const { return false; } // only on DataParameter

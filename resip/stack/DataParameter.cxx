@@ -26,7 +26,7 @@ DataParameter::DataParameter(ParameterTypes::Type type,
    pb.skipChar(Symbols::EQUALS[0]);
    pb.skipWhitespace();
 
-   if(ParseBuffer::oneOf(*pb.position(),terminators)) // handle cases such as ;tag=
+   if(pb.eof() || ParseBuffer::oneOf(*pb.position(),terminators)) // handle cases such as ;tag=
    {
       throw ParseException("Empty value in string-type parameter.",
                               "DataParameter",

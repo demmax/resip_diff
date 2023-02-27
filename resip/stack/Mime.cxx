@@ -70,15 +70,15 @@ Mime::operator<(const Mime& rhs) const
 bool
 Mime::isEqual(const Mime& rhs) const
 {
-   return (isEqualNoCase(type(), rhs.type()) &&
-           isEqualNoCase(subType(), rhs.subType()));
+   return (::isEqualNoCase(type(), rhs.type()) &&
+           ::isEqualNoCase(subType(), rhs.subType()));
 }
 
 bool
 Mime::operator==(const Mime& rhs) const
 {
-   return (isEqualNoCase(type(), rhs.type()) &&
-           isEqualNoCase(subType(), rhs.subType()));
+   return (::isEqualNoCase(type(), rhs.type()) &&
+           ::isEqualNoCase(subType(), rhs.subType()));
 }
 
 bool

@@ -432,7 +432,8 @@ AresDns::errorMessage(long errorCode)
 void
 AresDns::lookup(const char* target, unsigned short type, ExternalDnsHandler* handler, void* userData)
 {
-   ares_query(mChannel, target, C_IN, type,
+	ares_search(mChannel, target, C_IN, type,
+//   ares_query(mChannel, target, C_IN, type,
 #if defined(USE_ARES)
               resip_AresDns_aresCallback,
 #elif defined(USE_CARES)

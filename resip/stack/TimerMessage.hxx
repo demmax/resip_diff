@@ -14,11 +14,12 @@ class TimerMessage : public TransactionMessage
 {
    public:
       RESIP_HeapCount(TimerMessage);
-      TimerMessage(Data transactionId, Timer::Type type, unsigned long duration);
+      TimerMessage(Data transactionId, Timer::Type type, unsigned long duration, Timer::Id id);
       ~TimerMessage();
 
       virtual const Data& getTransactionId() const;
       Timer::Type getType() const;
+      Timer::Id getId() const;
       unsigned long getDuration() const;
       bool isClientTransaction() const;
       
@@ -28,6 +29,7 @@ class TimerMessage : public TransactionMessage
    private:
       Data mTransactionId;
       Timer::Type mType;
+      Timer::Id mId;
       unsigned long mDuration;
 };
 

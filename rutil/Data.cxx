@@ -191,57 +191,57 @@ Data::init(DataLocalSize<RESIP_DATA_LOCAL_SIZE> arg)
 }
 
 Data::Data() 
-   : mSize(0),
-     mBuf(mPreBuffer),
-     mCapacity(LocalAlloc),
-     mMine(Borrow)
+   :mBuf(mPreBuffer),
+    mSize(0),
+    mCapacity(LocalAlloc),
+    mMine(Borrow)
 {
    mBuf[mSize] = 0;
 }
 
 Data::Data(int capacity,
            const Data::PreallocateType&) 
-   : mSize(0),
-     mBuf(capacity > LocalAlloc 
-          ? new char[capacity + 1]
-          : mPreBuffer),
-     mCapacity(capacity > LocalAlloc
-               ? capacity
-               : LocalAlloc),
-     mMine(capacity > LocalAlloc ? Take : Borrow)
 {
-   assert( capacity >= 0 );
-   mBuf[mSize] = 0;
+    mSize = 0;
+    mCapacity = (capacity > LocalAlloc
+        ? capacity
+        : LocalAlloc);
+    mBuf = (capacity > LocalAlloc
+        ? new char[capacity + 1]
+        : mPreBuffer);
+    mMine = (capacity > LocalAlloc ? Take : Borrow);
+        assert( capacity >= 0 );
+    mBuf[mSize] = 0;
 }
 
 #ifdef DEPRECATED_PREALLOC
 // pre-allocate capacity
 Data::Data(int capacity, bool) 
-   : mSize(0),
-     mBuf(capacity > LocalAlloc 
-          ? new char[capacity + 1]
-          : mPreBuffer),
-     mCapacity(capacity > LocalAlloc
-               ? capacity
-               : LocalAlloc),
-     mMine(capacity > LocalAlloc ? Take : Borrow)
 {
-   assert( capacity >= 0 );
+    mSize = 0;
+    mCapacity = (capacity > LocalAlloc
+        ? capacity
+        : LocalAlloc);
+    mBuf = (capacity > LocalAlloc
+        ? new char[capacity + 1]
+        : mPreBuffer);
+    mMine = (capacity > LocalAlloc ? Take : Borrow);
+    assert( capacity >= 0 );
    mBuf[mSize] = 0;
 }
 #endif
 
-Data::Data(const char* str, int length) 
-   : mSize(length),
-     mBuf(mSize > LocalAlloc 
-          ? new char[mSize + 1]
-          : mPreBuffer),
-     mCapacity(mSize > LocalAlloc
-               ? mSize
-               : LocalAlloc),
-     mMine(mSize > LocalAlloc ? Take : Borrow)
+Data::Data(const char* str, Data::size_type length) 
 {
-   if (mSize > 0)
+    mSize = length;
+    mCapacity = (mSize > LocalAlloc
+        ? mSize
+        : LocalAlloc);
+    mBuf = (mSize > LocalAlloc
+        ? new char[mSize + 1]
+        : mPreBuffer);
+    mMine = (mSize > LocalAlloc ? Take : Borrow);
+    if (mSize > 0)
    {
       assert(str);
       memcpy(mBuf, str, mSize);
@@ -249,17 +249,17 @@ Data::Data(const char* str, int length)
    mBuf[mSize]=0;
 }
 
-Data::Data(const unsigned char* str, int length) 
-   : mSize(length),
-     mBuf(mSize > LocalAlloc 
-          ? new char[mSize + 1]
-          : mPreBuffer),
-     mCapacity(mSize > LocalAlloc
-               ? mSize
-               : LocalAlloc),
-     mMine(mSize > LocalAlloc ? Take : Borrow)
+Data::Data(const unsigned char* str, Data::size_type length) 
 {
-   if (mSize > 0)
+    mSize = length;
+    mCapacity = (mSize > LocalAlloc
+        ? mSize
+        : LocalAlloc);
+    mBuf = (mSize > LocalAlloc
+        ? new char[mSize + 1]
+        : mPreBuffer);
+    mMine = (mSize > LocalAlloc ? Take : Borrow);
+    if (mSize > 0)
    {
       assert(str);
       memcpy(mBuf, str, mSize);
@@ -270,40 +270,40 @@ Data::Data(const unsigned char* str, int length)
 // share memory KNOWN to be in a surrounding scope
 // wears off on, c_str, operator=, operator+=, non-const
 // operator[], append, reserve
-Data::Data(const char* str, int length, bool) 
-   : mSize(length),
-     mBuf(const_cast<char*>(str)),
-     mCapacity(mSize),
-     mMine(Share)
+Data::Data(const char* str, Data::size_type length, bool) 
 {
-   assert(str);
+    mSize = length;
+    mCapacity = mSize;
+    mBuf = const_cast<char*>(str);
+    mMine = Share;
+    assert(str);
 }
 
-Data::Data(ShareEnum se, const char* buffer, int length)
-   : mSize(length),
-     mBuf(const_cast<char*>(buffer)),
-     mCapacity(mSize),
-     mMine(se)
+Data::Data(ShareEnum se, const char* buffer, Data::size_type length)
 {
-   assert(buffer);
+    mSize = length;
+    mCapacity = mSize;
+    mBuf = const_cast<char*>(buffer);
+    mMine = se;
+    assert(buffer);
 }
 
 Data::Data(ShareEnum se, const char* buffer)
-   : mSize(strlen(buffer)),
-     mBuf(const_cast<char*>(buffer)),
-     mCapacity(mSize),
-     mMine(se)
 {
-   assert(buffer);
+    mSize = static_cast<Data::size_type>(strlen(buffer));
+    mCapacity = mSize;
+    mBuf = const_cast<char*>(buffer);
+    mMine = se;
+    assert(buffer);
 }
 
 Data::Data(ShareEnum se, const Data& staticData)
-   : mSize(staticData.mSize),
-     mBuf(staticData.mBuf),
-     mCapacity(mSize),
-     mMine(Share)
 {
-   // !dlb! maybe:
+    mSize = staticData.mSize;
+    mCapacity = mSize;
+    mBuf = staticData.mBuf;
+    mMine = Share;
+  // !dlb! maybe:
    // if you are trying to use Take, but make sure that you unset the mMine on
    // the staticData
    assert(se == Share); // makes no sense to call this with 'Take'.
@@ -311,16 +311,16 @@ Data::Data(ShareEnum se, const Data& staticData)
 //=============================================================================
 
 Data::Data(const char* str) 
-   : mSize(str ? strlen(str) : 0),
-     mBuf(mSize > LocalAlloc
-          ? new char[mSize + 1]
-          : mPreBuffer),
-     mCapacity(mSize > LocalAlloc
-               ? mSize
-               : LocalAlloc),
-     mMine(mSize > LocalAlloc ? Take : Borrow)
 {
-   if (str)
+    mSize = static_cast<Data::size_type>(str ? strlen(str) : 0);
+    mCapacity = (mSize > LocalAlloc
+        ? mSize
+        : LocalAlloc);
+    mBuf = (mSize > LocalAlloc
+        ? new char[mSize + 1]
+        : mPreBuffer);
+    mMine = (mSize > LocalAlloc ? Take : Borrow);
+    if (str)
    {
       memcpy(mBuf, str, mSize+1);
    }
@@ -331,29 +331,29 @@ Data::Data(const char* str)
 }
 
 Data::Data(const string& str)
-   : mSize(str.size()),
-     mBuf(mSize > LocalAlloc
-          ? new char[mSize + 1]
-          : mPreBuffer),
-     mCapacity(mSize > LocalAlloc
-               ? mSize
-               : LocalAlloc),
-     mMine(mSize > LocalAlloc ? Take : Borrow)
 {
-   memcpy(mBuf, str.c_str(), mSize + 1);
+    mSize = static_cast<Data::size_type>(str.size());
+    mCapacity = (mSize > LocalAlloc
+        ? mSize
+        : LocalAlloc);
+    mBuf = (mSize > LocalAlloc
+        ? new char[mSize + 1]
+        : mPreBuffer);
+    mMine = (mSize > LocalAlloc ? Take : Borrow);
+    memcpy(mBuf, str.c_str(), mSize + 1);
 }
 
 Data::Data(const Data& data) 
-   : mSize(data.mSize),
-     mBuf(mSize > LocalAlloc
-          ? new char[mSize + 1]
-          : mPreBuffer),
-     mCapacity(mSize > LocalAlloc
-               ? mSize
-               : LocalAlloc),
-     mMine(mSize > LocalAlloc ? Take : Borrow)
 {
-   if (mSize)
+    mSize = data.mSize;
+    mCapacity = (mSize > LocalAlloc
+        ? mSize
+        : LocalAlloc);
+    mBuf = (mSize > LocalAlloc
+        ? new char[mSize + 1]
+        : mPreBuffer);
+    mMine = (mSize > LocalAlloc ? Take : Borrow);
+    if (mSize)
    {
       memcpy(mBuf, data.mBuf, mSize);
    }
@@ -372,16 +372,16 @@ Data::Data(Data &&data)
 static const int IntMaxSize = 12;
 
 Data::Data(int val)
-   : mSize(0),
-     mBuf(IntMaxSize > LocalAlloc 
-          ? new char[IntMaxSize + 1]
-          : mPreBuffer),
-     mCapacity(IntMaxSize > LocalAlloc
-               ? IntMaxSize
-               : LocalAlloc),
-     mMine(IntMaxSize > LocalAlloc ? Take : Borrow)
 {
-   if (val == 0)
+    mSize = 0;
+    mCapacity = (IntMaxSize > LocalAlloc
+        ? IntMaxSize
+        : LocalAlloc);
+    mBuf = (IntMaxSize > LocalAlloc
+        ? new char[IntMaxSize + 1]
+        : mPreBuffer);
+    mMine = (IntMaxSize > LocalAlloc ? Take : Borrow);
+    if (val == 0)
    {
       mBuf[0] = '0';
       mBuf[1] = 0;
@@ -428,16 +428,16 @@ Data::Data(int val)
 
 static const int MaxLongSize = (sizeof(unsigned long)/sizeof(int))*IntMaxSize;
 Data::Data(unsigned long value)
-   : mSize(0),
-     mBuf(MaxLongSize > LocalAlloc 
-          ? new char[MaxLongSize + 1]
-          : mPreBuffer),
-     mCapacity(MaxLongSize > LocalAlloc
-               ? MaxLongSize
-               : LocalAlloc),
-     mMine(MaxLongSize > LocalAlloc ? Take : Borrow)
 {
-   if (value == 0)
+    mSize = 0;
+    mCapacity = (MaxLongSize > LocalAlloc
+        ? MaxLongSize
+        : LocalAlloc);
+    mBuf = (MaxLongSize > LocalAlloc
+        ? new char[MaxLongSize + 1]
+        : mPreBuffer);
+    mMine = (MaxLongSize > LocalAlloc ? Take : Borrow);
+    if (value == 0)
    {
       mBuf[0] = '0';
       mBuf[1] = 0;
@@ -469,16 +469,16 @@ Data::Data(unsigned long value)
 static const int DoubleMaxSize = MaxLongSize + Data::MaxDigitPrecision;
 Data::Data(double value, 
            Data::DoubleDigitPrecision precision)
-   : mSize(0),
-     mBuf(DoubleMaxSize + precision > LocalAlloc 
-          ? new char[DoubleMaxSize + precision + 1]
-          : mPreBuffer),
-     mCapacity(DoubleMaxSize + precision > LocalAlloc
-               ? DoubleMaxSize + precision
-               : LocalAlloc),
-     mMine(DoubleMaxSize + precision > LocalAlloc ? Take : Borrow)
 {
-   assert(precision >= 0);
+    mSize = 0;
+    mCapacity = (DoubleMaxSize + precision > LocalAlloc
+        ? DoubleMaxSize + precision
+        : LocalAlloc);
+    mBuf = (DoubleMaxSize + precision > LocalAlloc
+        ? new char[DoubleMaxSize + precision + 1]
+        : mPreBuffer);
+    mMine = (DoubleMaxSize + precision > LocalAlloc ? Take : Borrow);
+    assert(precision >= 0);
    assert(precision < MaxDigitPrecision);
 
    double v = value;
@@ -555,16 +555,16 @@ Data::Data(double value,
 #endif
 
 Data::Data(unsigned int value)
-   : mSize(0),
-     mBuf(IntMaxSize > LocalAlloc 
-          ? new char[IntMaxSize + 1]
-          : mPreBuffer),
-     mCapacity(IntMaxSize > LocalAlloc
-               ? IntMaxSize
-               : LocalAlloc),
-     mMine(IntMaxSize > LocalAlloc ? Take : Borrow)
 {
-   if (value == 0)
+    mSize = 0;
+    mCapacity = (IntMaxSize > LocalAlloc
+        ? IntMaxSize
+        : LocalAlloc);
+    mBuf = (IntMaxSize > LocalAlloc
+        ? new char[IntMaxSize + 1]
+        : mPreBuffer);
+    mMine = (IntMaxSize > LocalAlloc ? Take : Borrow);
+    if (value == 0)
    {
       mBuf[0] = '0';
       mBuf[1] = 0;
@@ -596,16 +596,16 @@ Data::Data(unsigned int value)
 static const int UInt64MaxSize = 20;
 
 Data::Data(UInt64 value)
-   : mSize(0),
-     mBuf(UInt64MaxSize > LocalAlloc 
-          ? new char[UInt64MaxSize + 1]
-          : mPreBuffer),
-     mCapacity(UInt64MaxSize > LocalAlloc
-               ? UInt64MaxSize
-               : LocalAlloc),
-     mMine(UInt64MaxSize > LocalAlloc ? Take : Borrow)
 {
-   if (value == 0)
+    mSize = 0;
+    mCapacity = (UInt64MaxSize > LocalAlloc
+        ? UInt64MaxSize
+        : LocalAlloc);
+    mBuf = (UInt64MaxSize > LocalAlloc
+        ? new char[UInt64MaxSize + 1]
+        : mPreBuffer);
+    mMine = (UInt64MaxSize > LocalAlloc ? Take : Borrow);
+    if (value == 0)
    {
       mBuf[0] = '0';
       mBuf[1] = 0;
@@ -635,24 +635,24 @@ Data::Data(UInt64 value)
 
 static const int CharMaxSize = 1;
 Data::Data(char c)
-   : mSize(1),
-     mBuf(CharMaxSize > LocalAlloc 
-          ? new char[CharMaxSize + 1]
-          : mPreBuffer),
-     mCapacity(CharMaxSize > LocalAlloc
-               ? CharMaxSize
-               : LocalAlloc),
-     mMine(CharMaxSize > LocalAlloc ? Take : Borrow)
 {
+    mSize = 1;
+    mCapacity = (CharMaxSize > LocalAlloc
+        ? CharMaxSize
+        : LocalAlloc);
+    mBuf = (CharMaxSize > LocalAlloc
+        ? new char[CharMaxSize + 1]
+        : mPreBuffer);
+    mMine = (CharMaxSize > LocalAlloc ? Take : Borrow);
    mBuf[0] = c;
    mBuf[1] = 0;
 }
 
 Data::Data(bool value)
-   : mSize(value ? 4 : 5), 
-     mBuf(value ? const_cast<char*>("true") : const_cast<char*>("false")),
-     mCapacity(value ? 4 : 5),
-     mMine(Borrow)
+   :mBuf(value ? const_cast<char*>("true") : const_cast<char*>("false")),
+    mSize(value ? 4 : 5), 
+    mCapacity(value ? 4 : 5),
+    mMine(Borrow)
 {}
 
 Data::~Data()
@@ -711,7 +711,7 @@ bool
 resip::operator<(const Data& lhs, const char* rhs)
 {
    assert(rhs);
-   Data::size_type l = strlen(rhs);
+   Data::size_type l = static_cast<Data::size_type>(strlen(rhs));
    int res = memcmp(lhs.mBuf, rhs, resipMin(lhs.mSize, l));
 
    if (res < 0)
@@ -732,7 +732,7 @@ bool
 resip::operator<(const char* lhs, const Data& rhs)
 {
    assert(lhs);
-   Data::size_type l = strlen(lhs);
+   Data::size_type l = static_cast<Data::size_type>(strlen(lhs));
    int res = memcmp(lhs, rhs.mBuf, resipMin(l, rhs.mSize));
 
    if (res < 0)
@@ -838,7 +838,7 @@ Data&
 Data::operator+=(const char* str)
 {
    assert(str);
-   return append(str, strlen(str));
+   return append(str, static_cast<Data::size_type>(strlen(str)));
 }
 
 Data&
@@ -910,7 +910,7 @@ Data&
 Data::operator=(const char* str)
 {
    assert(str);
-   size_type l = strlen(str);
+   size_type l = static_cast<Data::size_type>(strlen(str));
 
    if (mMine == Share)
    {
@@ -935,7 +935,7 @@ Data
 Data::operator+(const char* str) const
 {
    assert(str);
-   size_t l = strlen(str);
+   Data::size_type l = static_cast<Data::size_type>(strlen(str));
    Data tmp(mSize + l, Data::Preallocate);
    tmp.mSize = mSize + l;
    tmp.mCapacity = tmp.mSize;
@@ -1184,8 +1184,8 @@ Data::charUnencoded() const
                return ret;
             }
             
-            int highInt = high - hexmap;
-            int lowInt = low - hexmap;
+            int highInt = static_cast<int>(high - hexmap);
+            int lowInt = static_cast<int>(low - hexmap);
             ret += char(highInt<<4 | lowInt);
             i += 2;
          }
@@ -1436,7 +1436,7 @@ Data::xmlCharDataDecode(EncodeStream& s) const
 }
 
 Data
-Data::trunc(size_t s) const
+Data::trunc(size_type s) const
 {
    if (size() <= s)
    {
@@ -1494,6 +1494,25 @@ Data::uppercase()
       ++p;
    }
    return *this;
+}
+
+void Data::trimTrailingWhitespace()
+{
+    if (mSize <= 0)
+        return;
+	
+    for (; mSize > 0; mSize--)
+    {       
+        switch (*(mBuf + mSize - 1)) {
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\r':
+                continue;
+            default:
+                return;
+        }
+    }
 }
 
 Data&
@@ -1754,7 +1773,7 @@ Data::find(const Data& match,
       pb.skipToChars(match);
       if (!pb.eof())
       {
-         return pb.position() - pb.start() + start;
+         return static_cast<Data::size_type>(pb.position() - pb.start()) + start;
       }
    }
 
@@ -1829,15 +1848,15 @@ static const unsigned char randomPermutation[256] =
    235, 217, 165, 122, 15, 141, 158, 147, 240, 24, 162, 18, 60, 73, 227, 248
 };
 
-size_t
-Data::rawHash(const unsigned char* c, size_t size)
+UInt32
+Data::rawHash(const unsigned char* c, size_type size)
 {
    // 4 byte Pearson's hash
    // essentially random hashing
 
    union 
    {
-         size_t st;
+         UInt32 st;
          unsigned char bytes[4];
    };
    st = 0; // suppresses warnings about unused st
@@ -1860,13 +1879,13 @@ Data::rawHash(const unsigned char* c, size_t size)
 }
 
 // use only for ascii characters!
-size_t 
-Data::rawCaseInsensitiveHash(const unsigned char* c, size_t size)
+UInt32 
+Data::rawCaseInsensitiveHash(const unsigned char* c, size_type size)
 {
 
    union 
    {
-         size_t st;
+         UInt32 st;
          unsigned char bytes[4];
    };
    st = 0; // suppresses warnings about unused st
@@ -1889,6 +1908,7 @@ Data::rawCaseInsensitiveHash(const unsigned char* c, size_t size)
    return ntohl(st);
 }
 
+/*
 Data
 bits(size_t v)
 {
@@ -1901,14 +1921,15 @@ bits(size_t v)
 
    return ret;
 }
+*/
 
-size_t
+UInt32
 Data::hash() const
 {
    return rawHash((const unsigned char*)(this->data()), this->size());
 }
 
-size_t
+UInt32
 Data::caseInsensitivehash() const
 {
    return rawCaseInsensitiveHash((const unsigned char*)(this->data()), this->size());
@@ -2073,6 +2094,26 @@ Data::base64encode(bool useSafeSet) const
 
    return Data(Data::Take, reinterpret_cast<char*>(dstData),
                dstIndex);
+}
+
+Data
+Data::stripNonDigits(bool stripPlus) const
+{
+   Data ret(mSize, Data::Preallocate);
+
+   const char* p = mBuf;
+   char* r = ret.mBuf;
+   for (size_type i=0; i < mSize; ++i)
+   {
+	   if ((*p>='0' && *p<='9') || *p=='#' || *p=='*')
+		  *r++ = *p;
+	  else if (!stripPlus && *p=='+')
+		  *r++ = *p;
+	  p++;
+   }
+   *r = 0;
+   ret.mSize = static_cast<Data::size_type>(r - ret.mBuf);
+   return ret;
 }
 
 
