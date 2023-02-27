@@ -265,6 +265,69 @@ Transport::makeFailedResponse(const SipMessage& msg,
   transmit(dest, encoded, Data::Empty, remoteSigcompId);
 }
 
+void resip::LogOutboundMessage(const SipMessage &msg, const Tuple &transport)
+{
+	Data automationKey;
+	int port;
+	automationKey = "--> SENT ";
+
+    int msg_sz = msg.origDatagramLength() != 0 ? msg.origDatagramLength() : msg.getEncoded().size();
+	if (msg_sz != 0)
+	{
+        automationKey += Data(msg_sz);
+        automationKey += " bytes to ";
+	}
+	
+	
+	automationKey += transport.presentationFormat();  
+	automationKey += ":";
+	port = transport.getPort();
+	automationKey += Data(port <= 0 ? 5060 : port);
+	
+	if (!msg.getTlsDomain().empty())
+	{
+        automationKey += " tlsDomain=";
+        automationKey += msg.getTlsDomain();
+	}
+    automationKey += " >>>\n";
+	
+	Data msgData = Data::from(msg);
+    int pos = 0;
+    while ((pos = msgData.find("\r\n", pos)) > 0)
+    {
+        msgData[pos] = ' ';
+    }
+    DebugLog( << automationKey << msgData );
+	
+}
+
+void resip::LogInboundMessage(const char *buf, int length, const Tuple &transport)
+{
+	Data automationKey;
+	int port;
+	
+	if (length == 2 && (strncmp(buf, Symbols::CRLF, 2) == 0)) // EyeBeam keep-alives
+		return;
+	
+	automationKey = "<-- RECEIVED ";  
+	automationKey += Data(length);
+	automationKey += " bytes from ";
+	automationKey += transport.presentationFormat();  
+	automationKey += ":";
+	port = transport.getPort();
+	automationKey += Data(port <= 0 ? 5060 : port);
+	
+	automationKey += " >>>\n";
+	
+	Data msgData(buf, length);
+    int pos = 0;
+    while ((pos = msgData.find("\r\n", pos)) > 0)
+    {
+        msgData[pos] = ' ';
+    }
+    DebugLog( << automationKey << msgData );
+}
+
 
 void
 Transport::stampReceived(SipMessage* message)
@@ -277,14 +340,17 @@ Transport::stampReceived(SipMessage* message)
 	  if(message->header(h_Vias).front().sentHost() != received)  // only add if received address is different from sent-by in Via
 	  {
          message->header(h_Vias).front().param(p_received) = received;
+		  message->header(h_Vias).front().param(p_rport);
+//		  DebugLog( << "Added received parameter as: " << received );		  
 	  }
       //message->header(h_Vias).front().param(p_received) = Tuple::inet_ntop(tuple);
       if (message->header(h_Vias).front().exists(p_rport))
       {
          message->header(h_Vias).front().param(p_rport).port() = tuple.getPort();
+//		  DebugLog( << "Added rport parameter as: " << tuple.getPort() );		  
       }
    }
-   DebugLog (<< "incoming from: " << message->getSource());
+//   DebugLog (<< "incoming from: " << message->getSource());
    StackLog (<< endl << endl << *message);
 }
 

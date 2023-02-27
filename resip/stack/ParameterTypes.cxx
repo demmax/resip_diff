@@ -120,6 +120,15 @@ defineParam(qop,"qop",DataParameter,"RFC3261");
 defineParam(qopOptions,"qop",DataParameter,"RFC3261");
 
 defineParam(addTransport, "addTransport", ExistsParameter, "");
+//alexkr
+defineParam(orbit, "orbit", DataParameter, "Polycom parking orbit implementation");
+defineParam(joined, "joined", ExistsParameter, "MCU joined notification");
+defineParam(left, "left", ExistsParameter, "MCU left notification");
+defineParam(cterm, "cterm", DataParameter, "MCU termination policy");
+defineParam(ctype, "ctype", DataParameter, "MCU termination type");
+defineParam(hadd, "hadd", DataParameter, "MCU host address add");
+defineParam(hdel, "hdel", DataParameter, "MCU host address delete");
+
 
 #include "resip/stack/ParameterHash.hxx"
 

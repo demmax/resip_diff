@@ -45,6 +45,8 @@ const int Helper::tagSize = 4;
 // (e.g. proxies) want to share the same secret
 Helper::NonceHelperPtr Helper::mNonceHelperPtr;
 
+Data Helper::mCallidHostPart;
+
 void Helper::integer2hex(char* _d, unsigned int _s, bool _l)
 {
    int i;
@@ -622,12 +624,28 @@ Helper::computeUniqueBranch()
    return result;
 }
 
+void Helper::setCallidHostPart(const Data& hostPart) 
+{
+	DebugLog(<< "setting Host part for future Call-IDs to: " << hostPart);
+	mCallidHostPart = hostPart;
+}
 
 static Data localhostname = DnsUtil::getLocalHostName();
 Data
 Helper::computeCallId()
 {
-   Data hostAndSalt(localhostname + Random::getRandomHex(16));
+	Data hostAndSalt;
+
+	// alexei: random@ipaddress format of Call-ID for NTT/KDDI
+	if (!mCallidHostPart.empty()) 
+	{
+		hostAndSalt = Random::getRandomHex(16);
+	}
+	else 
+	{
+		// legacy original resiprocate implementation		
+		hostAndSalt = localhostname + Random::getRandomHex(16);
+	}
 #ifndef USE_SSL // .bwc. None of this is neccessary if we're using openssl
 #if defined(__linux__) || defined(__APPLE__)
    pid_t pid = getpid();
@@ -644,7 +662,17 @@ Helper::computeCallId()
    hostAndSalt.append((char*)&threadId,sizeof(threadId));
 #endif
 #endif // of USE_SSL
-   return hostAndSalt.md5().base64encode(true);
+
+	if (!mCallidHostPart.empty()) 
+	{
+		Data callid = hostAndSalt.md5();
+//		callid = callid.base64encode(true);
+		callid += "@";
+		callid += mCallidHostPart;
+		return callid;
+	}
+	else
+		return hostAndSalt.md5().base64encode(true);
 }
 
 Data
@@ -1371,7 +1399,8 @@ Helper::makeChallengeResponseAuth(SipMessage& request,
       auth.param(p_algorithm) = "MD5";
    }
 
-   if (challenge.exists(p_opaque) && challenge.param(p_opaque).size() > 0)
+   // if (challenge.exists(p_opaque) && challenge.param(p_opaque).size() > 0)
+   if (challenge.exists(p_opaque))
    {
       auth.param(p_opaque) = challenge.param(p_opaque);
    }
@@ -1484,7 +1513,8 @@ Helper::makeChallengeResponseAuthWithA1(const SipMessage& request,
       auth.param(p_algorithm) = "MD5";
    }
 
-   if (challenge.exists(p_opaque) && challenge.param(p_opaque).size() > 0)
+   //if (challenge.exists(p_opaque) && challenge.param(p_opaque).size() > 0)
+   if (challenge.exists(p_opaque))
    {
       auth.param(p_opaque) = challenge.param(p_opaque);
    }
@@ -1616,7 +1646,10 @@ Helper::getPortForReply(SipMessage& request)
    }
    else   // unreliable transport 18.2.2 bullets 3 and 4
    {
-      if (request.header(h_Vias).front().exists(p_rport))
+      //if (request.header(h_Vias).front().exists(p_rport))
+	   //alexkr:
+	   if ((request.header(h_Vias).front().exists(p_received) && !request.header(h_Vias).front().param(p_received).empty()) ||
+		   (request.header(h_Vias).front().exists(p_rport) && request.header(h_Vias).front().param(p_rport).hasValue()))		   
       {
          port = request.getSource().getPort();
       }

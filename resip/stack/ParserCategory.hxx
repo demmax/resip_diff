@@ -168,6 +168,16 @@ class ParserCategory : public LazyParser
 
       defineParam(sigcompId, "sigcomp-id", QuotedDataParameter, "draft-ietf-rohc-sigcomp-sip");
       defineParam(addTransport, "addTransport", ExistsParameter, "");
+	
+		//alexkr
+		defineParam(orbit, "orbit", DataParameter, "Polycom parking orbit implementation");
+		defineParam(joined, "joined", ExistsParameter, "MCU joined notification");
+		defineParam(left, "left", ExistsParameter, "MCU left notification");
+		defineParam(cterm, "cterm", DataParameter, "MCU termination policy");
+		defineParam(ctype, "ctype", DataParameter, "MCU termination type");
+		defineParam(hadd, "hadd", DataParameter, "MCU host address add");
+		defineParam(hdel, "hdel", DataParameter, "MCU host address delete");
+	
 
       void parseParameters(ParseBuffer& pb);
       EncodeStream& encodeParameters(EncodeStream& str) const;
@@ -180,6 +190,10 @@ class ParserCategory : public LazyParser
       void removeParameterByEnum(ParameterTypes::Type type);
       void setParameter(const Parameter* parameter);
 
+	//alexkr: 2check
+	void removeParameterByData(const Data& data);
+	
+
       int numKnownParams() const {return (int)mParameters.size();};
       int numUnknownParams() const {return (int)mUnknownParameters.size();};
 
@@ -187,7 +201,6 @@ class ParserCategory : public LazyParser
       ParserCategory();
 
       Parameter* getParameterByData(const Data& data) const;
-      void removeParameterByData(const Data& data);
 
       virtual const Data& errorContext() const;
 

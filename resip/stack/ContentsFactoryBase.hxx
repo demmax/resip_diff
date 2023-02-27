@@ -22,6 +22,9 @@ class ContentsFactoryBase
 
       static HashMap<Mime, ContentsFactoryBase*>& getFactoryMap();
    private:
+	//alexkr:
+	static void deleteFactoryMap();
+	
       Mime mContentType;
       static HashMap<Mime, ContentsFactoryBase*>* FactoryMap;
 };

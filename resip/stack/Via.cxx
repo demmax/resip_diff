@@ -13,6 +13,7 @@ using namespace std;
 
 #define RESIPROCATE_SUBSYSTEM Subsystem::SIP
 
+bool Via::mInsertRPort = true;
 
 //====================
 // Via:
@@ -27,7 +28,10 @@ Via::Via()
 {
    // insert a branch in all Vias (default constructor)
    this->param(p_branch);
-   this->param(p_rport); // add the rport parameter by default as per rfc 3581
+   if (mInsertRPort)
+   {
+      this->param(p_rport); // add the rport parameter by default as per rfc 3581
+   }
 }
 
 Via::Via(HeaderFieldValue* hfv, Headers::Type type) 
@@ -47,6 +51,11 @@ Via::Via(const Via& rhs)
      mSentHost(rhs.mSentHost),
      mSentPort(rhs.mSentPort)
 {
+}
+
+void Via::setInsertRPort(bool use)
+{
+    mInsertRPort = use;
 }
 
 Via&
@@ -227,6 +236,7 @@ Via::encodeParsed(EncodeStream& str) const
    encodeParameters(str);
    return str;
 }
+
 
 /* ====================================================================
  * The Vovida Software License, Version 1.0 

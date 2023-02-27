@@ -229,7 +229,8 @@ SipStack::addAlias(const Data& domain, int port)
 
    if(mUri.host().empty())
    {
-      mUri.host()=*mDomains.begin();
+	   //alexkr: fix
+	   mUri = resip::Uri("sip:" + *mDomains.begin());
    }
 
 }
@@ -275,6 +276,9 @@ SipStack::getHostAddress()
    
    struct hostent* hostEnt = gethostbyname( hostName );
    assert( hostEnt );
+
+   if(hostEnt == NULL)
+	   return "127.0.0.1";
    
    struct in_addr* addr = (struct in_addr*) hostEnt->h_addr_list[0];
    assert( addr );
@@ -474,9 +478,27 @@ SipStack::abandonServerTransaction(const Data& tid)
 }
 
 void 
+SipStack::silentlyAbandonServerTransaction(const Data& tid)
+{
+   mTransactionController.silentlyAbandonServerTransaction(tid);
+}
+
+void 
+SipStack::setTransactionMessageFilter(SetTransactionMessageFilter* filter)
+{
+   mTransactionController.setTransactionMessageFilter(filter);
+}
+
+void 
 SipStack::cancelClientInviteTransaction(const Data& tid)
 {
    mTransactionController.cancelClientInviteTransaction(tid);
+}
+
+void 
+SipStack::cancelClientNonInviteTransaction(const Data& tid)
+{
+   mTransactionController.cancelClientNonInviteTransaction(tid);
 }
 
 
@@ -559,7 +581,15 @@ SipStack::getTimeTillNextProcessMS()
 {
    Lock lock(mAppTimerMutex);
 
-   unsigned int dnsNextProcess = (mDnsStub->requiresProcess() ? 0 : 0xffffffff);
+   unsigned int dnsNextProcess;
+   
+   if(mDnsStub->requiresProcess())
+       dnsNextProcess = 0;
+   else if(mDnsStub->requiresTimeoutProcessing())
+       dnsNextProcess = 100;
+   else
+       dnsNextProcess = 0xffffffff;
+
    return resipMin(Timer::getMaxSystemTimeWaitMs(),resipMin(dnsNextProcess,
                    resipMin(mTransactionController.getTimeTillNextProcessMS(),
                             resipMin(mTuSelector.getTimeTillNextProcessMS(), mAppTimers.msTillNextTimer()))));
@@ -682,6 +712,11 @@ SipStack::isFlowAlive(const resip::Tuple& flow) const
 {
    return flow.getType()==UDP || 
          mTransactionController.transportSelector().connectionAlive(flow);
+}
+
+DnsResult* SipStack::createDnsResult(DnsHandler* handler)
+{
+	return mTransactionController.transportSelector().createDnsResult(handler);
 }
 
 /* ====================================================================

@@ -183,6 +183,22 @@ bool RRCache::lookup(const Data& target,
    }
 }
 
+bool RRCache::check(const Data& target, int type, UInt64& absoluteExpiry)
+{
+   RRList* key = new RRList(target, type);
+   RRSet::iterator it = mRRSet.find(key);
+   delete key;
+   if (it == mRRSet.end())
+   {
+      return false;
+   }
+   else
+   {
+      absoluteExpiry = (*it)->absoluteExpiry();
+	  return true;
+   }
+}
+
 void 
 RRCache::clearCache()
 {

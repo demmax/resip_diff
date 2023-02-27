@@ -181,7 +181,10 @@ struct TransitionInfo
 
 static TransitionInfo stateMachine[numStates][numCharCategories];
 
-inline void specTransition(State state,
+#ifndef __APPLE__
+inline
+#endif
+void specTransition(State state,
                            CharCategory charCategory,
                            TransitionAction action,
                            State nextState)

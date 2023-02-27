@@ -56,7 +56,7 @@ DnsUtil::lookupARecords(const Data& host)
    struct hostent hostbuf; 
    char buffer[8192];
    result = gethostbyname_r( host.c_str(), &hostbuf, buffer, sizeof(buffer), &herrno );
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(WIN32) || defined (__FreeBSD__)
    // gethostbyname in os/x is thread-safe...
    // http://developer.apple.com/technotes/tn2002/pdf/tn2053.pdf
    result = gethostbyname( host.c_str() );
@@ -823,7 +823,7 @@ inet_pton6(const char *src, u_char *dst)
       size_t i;
 
       for (i = 1; i <= n; i++) {
-         endp[- i] = colonp[n - i];
+         endp[n - i] = colonp[n - i];
          colonp[n - i] = 0;
       }
       tp = endp;

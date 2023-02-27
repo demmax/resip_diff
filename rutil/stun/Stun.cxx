@@ -498,10 +498,12 @@ stunParseMessage( char* buf, unsigned int bufLen, StunMessage& msg, bool verbose
 					
          default:
             if (verbose) clog << "Unknown attribute: " << atrType << endl;
+#if 0			  
             if ( atrType <= 0x7FFF ) 
             {
                return false;
             }
+#endif			  
       }
 		
       body += attrLen;
@@ -806,7 +808,7 @@ stunRand()
       UInt64 tick;
 		
 #if defined(WIN32) 
-#if !defined(UNDER_CE) && !defined(__GNUC__)
+#if !defined(_WIN64) && !defined(UNDER_CE) && !defined(__GNUC__)
       volatile unsigned int lowtick=0,hightick=0;
       __asm
          {

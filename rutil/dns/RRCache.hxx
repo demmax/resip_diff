@@ -41,12 +41,13 @@ class RRCache
                     const int status,
                     RROverlay overlay);
       bool lookup(const Data& target, int type, int proto, Result& records, int& status);
+	  bool check(const Data& target, int type, UInt64& absoluteExpiry);
       void clearCache();
       void logCache();
 
    private:
       static const int MIN_TO_SEC = 60;
-      static const int DEFAULT_USER_DEFINED_TTL = 10; // in seconds.
+      static const int DEFAULT_USER_DEFINED_TTL = 33; // in seconds.
 
       RRCache();
       static const int DEFAULT_SIZE = 512;

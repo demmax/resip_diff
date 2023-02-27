@@ -111,7 +111,13 @@ DnsStub::~DnsStub()
 bool 
 DnsStub::requiresProcess()
 {
-   return (mCommandFifo.size() > 0) || (mQueries.size() > 0);
+   return (mCommandFifo.size() > 0);
+}
+
+bool 
+DnsStub::requiresTimeoutProcessing()
+{
+    return (mQueries.size() > 0);
 }
 
 void 
@@ -197,6 +203,11 @@ void DnsStub::cacheTTL(const Data& key,
                        const unsigned char* abuf, 
                        int alen)
 {
+    // alexkr: submit to community?
+    // avoid crash
+    if (!abuf)
+        return;
+
    // skip header
    const unsigned char* aptr = abuf + HFIXEDSZ;
 

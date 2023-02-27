@@ -433,7 +433,8 @@ DnsResult::lookupInternal(const Uri& uri)
             else
             {
                // !bwc! Debatable.
-               assert(0);
+               // !anatol! commented the  assert 
+			   // assert(0);
                if (mHandler) mHandler->handle(this);
             }
          }
@@ -464,7 +465,9 @@ void DnsResult::lookupHost(const Data& target)
    }
    else
    {
-      assert(0);
+		// !anatol! commented the assert and called handle
+		// assert(0);
+		if (mHandler) mHandler->handle(this);
    }
 }
 

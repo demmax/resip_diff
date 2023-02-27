@@ -75,7 +75,7 @@ class SipMessage : public TransactionMessage
       RESIP_HeapCount(SipMessage);
       typedef std::list< std::pair<Data, HeaderFieldValueList*> > UnknownHeaders;
 
-      explicit SipMessage(const Transport* fromWire = 0);
+	  explicit SipMessage(const Transport* fromWire = 0,/*alexkr*/ int orig_datagram_length = 0);
       // .dlb. public, allows pass by value to compile.
       SipMessage(const SipMessage& message);
 
@@ -256,6 +256,13 @@ class SipMessage : public TransactionMessage
       defineMultiHeader(Warning, "Warning", WarningCategory, "RFC 3261");
       defineMultiHeader(Via, "Via", Via, "RFC 3261");
       defineHeader(RAck, "RAck", RAckCategory, "RFC 3262");
+	//alexkr:
+	defineHeader(IPCMExtensions, "P-Ipcm-Extensions", Token, "p-ipcm-extensions");
+	defineMultiHeader(PMrefTo, "P-Mref-To", NameAddr, "p-ipcm-mcu-multiple-refer-to");
+	defineMultiHeader(PConfPolicy, "P-Conf-Policy", Token, "p-ipcm-mcu-conf-policy");
+	defineMultiHeader(PConfParty, "P-Conf-Party", NameAddr, "p-ipcm-mcu-conf-party");
+	
+	
 
       // unknown header interface
       const StringCategories& header(const ExtensionHeader& symbol) const;
@@ -266,6 +273,7 @@ class SipMessage : public TransactionMessage
       // typeless header interface
       const HeaderFieldValueList* getRawHeader(Headers::Type headerType) const;
       void setRawHeader(const HeaderFieldValueList* hfvs, Headers::Type headerType);
+	  void setRawHeader(const HeaderFieldValueList* hfvs, const ExtensionHeader& symbol);
       const UnknownHeaders& getRawUnknownHeaders() const {return mUnknownHeaders;}
 
       Contents* getContents() const;
@@ -305,6 +313,9 @@ class SipMessage : public TransactionMessage
       // TransportSelector::transmit()
       // !!! should only be called by the TransportSelector !!!
       Data& getEncoded();
+	
+	  const Data& getEncoded() const;
+	
 
       // returns the compartment ID which was computed by
       // TransportSelector::transmit()
@@ -341,6 +352,33 @@ class SipMessage : public TransactionMessage
       bool mIsDecorated;
 
       bool mIsBadAck200;
+	
+	//alexkr:
+	int   origDatagramLength  () const    {return mOrigDatagramLength;}
+	
+	typedef enum
+	{
+		SIPMSG_FLAG_NONE              =           (0 << 0),
+		//whatever it means for request. For us - it was responded or propagated.
+		SIPMSG_FLAG_HANDLED           =           (1 << 0),
+		SIPMSG_FLAG_HANDLED_3PCC      =           (1 << 1),
+		SIPMSG_FLAG_CUSTOM_START      =           (1 << 9)
+	} message_flags_t;
+	
+	int       messageFlag         ()          const   {return mFlags;}
+	void      messageFlagSet      (int mask)  const   {mFlags |= mask;}
+	void      messageFlagClear    (int mask)  const   {mFlags &= ~mask;}
+
+    unsigned long getTimerB() const
+    {
+        return mTimerB;
+    }
+	
+    void setTimerB(unsigned long nValue)
+    {
+        mTimerB = nValue;
+    }
+
 
    protected:
       void cleanUp();
@@ -416,6 +454,12 @@ class SipMessage : public TransactionMessage
 
       std::vector<MessageDecorator*> mOutboundDecorators;
 
+	//alexkr
+	int           mOrigDatagramLength;
+	//alexkr sick without the flags
+	mutable int   mFlags;
+    unsigned long mTimerB;
+	
       friend class TransportSelector;
 };
 

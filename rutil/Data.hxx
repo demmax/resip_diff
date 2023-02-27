@@ -10,7 +10,7 @@
 #include "rutil/HashMap.hxx"
 
 #ifndef RESIP_DATA_LOCAL_SIZE
-#define RESIP_DATA_LOCAL_SIZE 16
+#define RESIP_DATA_LOCAL_SIZE 30
 #endif
 
 class TestData;
@@ -543,6 +543,12 @@ class Data
       */
       Data trunc(size_type trunc) const;
 
+	
+	/**
+	 self-explanatory.
+	 */
+	void trimTrailingWhitespace();
+	
       /**
         Clears the contents of this Data. This call does not modify
         the capacity of the Data.
@@ -623,6 +629,8 @@ class Data
           target. Returns the number of matches.
       */
       int replace(const Data& match, const Data& target);
+      
+	  Data stripNonDigits(bool stripPlus=true) const;
       
       /**
         Constant that represents a zero-length data.
@@ -725,12 +733,12 @@ class Data
 	  Larger LocalAlloc makes for larger objects that have Data members but
 	  bulk allocation/deallocation of Data  members. */
       enum {LocalAlloc = RESIP_DATA_LOCAL_SIZE };
-      char mPreBuffer[LocalAlloc+1];
 
-      size_type mSize;
       char* mBuf;
+      size_type mSize;
       size_type mCapacity;
-      ShareEnum mMine;
+      char mPreBuffer[LocalAlloc+1];
+      char mMine;
       // The invariant for a Data with !mMine is mSize == mCapacity
 
       static const bool isCharHex[256];

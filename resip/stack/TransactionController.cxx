@@ -3,8 +3,11 @@
 #endif
 
 #include "resip/stack/AbandonServerTransaction.hxx"
+#include "resip/stack/SilentlyAbandonServerTransaction.hxx"
+#include "resip/stack/SetTransactionMessageFilter.hxx"
 #include "resip/stack/ApplicationMessage.hxx"
 #include "resip/stack/CancelClientInviteTransaction.hxx"
+#include "resip/stack/CancelClientNonInviteTransaction.hxx"
 #include "resip/stack/ShutdownMessage.hxx"
 #include "resip/stack/SipMessage.hxx"
 #include "resip/stack/TransactionController.hxx"
@@ -174,11 +177,29 @@ TransactionController::abandonServerTransaction(const Data& tid)
 }
 
 void 
+TransactionController::silentlyAbandonServerTransaction(const Data& tid)
+{
+   mStateMacFifo.add(new SilentlyAbandonServerTransaction(tid));
+}
+
+void 
+TransactionController::setTransactionMessageFilter(SetTransactionMessageFilter* filter)
+{
+    mStateMacFifo.add(filter);
+}
+
+
+void 
 TransactionController::cancelClientInviteTransaction(const Data& tid)
 {
    mStateMacFifo.add(new CancelClientInviteTransaction(tid));
 }
 
+void 
+TransactionController::cancelClientNonInviteTransaction(const Data& tid)
+{
+   mStateMacFifo.add(new CancelClientNonInviteTransaction(tid));
+}
 
 /* ====================================================================
  * The Vovida Software License, Version 1.0 
