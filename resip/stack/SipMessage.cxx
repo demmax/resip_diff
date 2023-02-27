@@ -216,7 +216,7 @@ SipMessage::make(const Data& data,  bool isExternal)
    Transport* external = (Transport*)(0xFFFF);
    SipMessage* msg = new SipMessage(isExternal ? external : 0);
 
-   size_t len = data.size();
+   unsigned int len = data.size();
    char *buffer = new char[len + 5];
 
    msg->addBuffer(buffer);
@@ -235,7 +235,7 @@ SipMessage::make(const Data& data,  bool isExternal)
    }
 
    // no pp error
-   unsigned int used = unprocessedCharPtr - buffer;
+   unsigned int used = static_cast<unsigned int>(unprocessedCharPtr - buffer);
 
    if (used < len)
    {
